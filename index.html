@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>WebEditor mit KI-Unterstützung</title>
+    <title>WebEditor mit Live-Vorschau</title>
     <link rel="stylesheet" href="styles.css" />
     <link
       rel="preconnect"
@@ -23,19 +23,120 @@
   </head>
   <body>
     <header class="app-header">
-      <div class="brand">
-        <span class="brand-icon">🛠️</span>
+      <a id="brand-home" class="brand brand-link" href="#" aria-label="Zur Startseite">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+            <path d="M9.5 9.5l-2 2 2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.5 9.5l2 2-2 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M12 8l-1.5 8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
         <div>
           <h1>Code WebEditor</h1>
-          <p>Kompletter Browser-Editor mit lokalem KI-Assistenten</p>
+          <p>Kompletter Browser-Editor mit Live-Vorschau</p>
         </div>
-      </div>
+      </a>
       <div class="status-pill" id="status-pill" aria-live="polite">
         Bereit
       </div>
     </header>
 
+    <div id="start-screen" class="start-screen" aria-hidden="true">
+      <div
+        class="start-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="start-screen-title"
+        aria-describedby="start-screen-description"
+      >
+        <header>
+          <h2 id="start-screen-title">Willkommen im Code WebEditor</h2>
+          <p>Lege los mit einem leeren Projekt oder starte mit unserem Beispiel, das du komplett anpassen kannst.</p>
+        </header>
+        <div class="start-actions">
+          <button id="start-resume-button" class="primary hidden" type="button">
+            Gespeichertes Projekt fortsetzen
+          </button>
+          <button id="start-example-button" class="secondary" type="button">
+            Beispielprojekt öffnen
+          </button>
+          <button id="start-blank-button" class="secondary" type="button">
+            Leeres Projekt starten
+          </button>
+        </div>
+        <div id="start-screen-description" class="start-info">
+          Du kannst deine Auswahl jederzeit über den Projekt-Reset zurücksetzen oder neue Dateien hinzufügen und umbenennen.
+        </div>
+      </div>
+    </div>
+
     <main class="workspace">
+      <aside class="file-sidebar" aria-label="Dateien">
+        <header class="sidebar-header">
+          <div>
+            <h2>Dateien</h2>
+            <p>Verwalte die Dateien deines Projekts</p>
+          </div>
+          <div class="sidebar-actions" role="group" aria-label="Dateiaktionen">
+            <button
+              id="rename-file-button"
+              class="ghost"
+              aria-label="Datei umbenennen"
+              title="Datei umbenennen"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path
+                  d="M4 15.5V20h4.5L19 9.5 14.5 5 4 15.5z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M13.5 6.5l4 4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+            <button
+              id="new-file-button"
+              class="ghost"
+              aria-label="Neue Datei"
+              title="Neue Datei"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6" />
+                <path
+                  d="M12 8v8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M8 12h8"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </header>
+        <ul id="file-list" class="file-list" role="listbox" aria-label="Projektdateien"></ul>
+        <div class="file-sidebar-footer">
+          <button id="reset-files-button" class="ghost" title="Projektdateien zurücksetzen">
+            Projekt zurücksetzen
+          </button>
+        </div>
+      </aside>
       <section class="editor-panel">
         <div class="toolbar">
           <button id="run-button" class="primary">Code ausführen</button>
@@ -43,26 +144,6 @@
           <button id="reset-button">Zurücksetzen</button>
         </div>
         <div id="editor" class="editor" aria-label="Code Editor"></div>
-
-        <section class="ai-panel" aria-label="KI Unterstützungsbereich">
-          <header>
-            <h2>KI-Assistent</h2>
-            <p>
-              Arbeitet 100&nbsp;% clientseitig mit einem kompakten Sprachmodell.
-            </p>
-          </header>
-          <div class="ai-actions">
-            <button id="ai-complete-button" class="primary">
-              KI Vorschlag
-            </button>
-            <button id="ai-explain-button">Code erklären</button>
-          </div>
-          <div class="ai-output" id="ai-output">
-            <div class="placeholder">
-              Aktiviere eine KI-Aktion, um Ergebnisse zu sehen.
-            </div>
-          </div>
-        </section>
       </section>
 
       <section class="preview-panel" aria-label="Live Vorschau">
@@ -70,8 +151,13 @@
           <span>Live Vorschau</span>
         </div>
         <iframe id="preview-frame" title="Code Vorschau"></iframe>
+      </section>
+
+      <section class="console-panel" aria-label="Konsolen-Ausgabe">
+        <div class="toolbar">
+          <span>Konsolen-Ausgabe</span>
+        </div>
         <div class="console-output" id="console-output">
-          <header>Konsolen-Ausgabe</header>
           <pre id="console-log"></pre>
         </div>
       </section>
