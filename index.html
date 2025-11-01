@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>WebEditor mit KI-Unterstützung</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-html.min.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-icon">🛠️</span>
+        <div>
+          <h1>Code WebEditor</h1>
+          <p>Kompletter Browser-Editor mit lokalem KI-Assistenten</p>
+        </div>
+      </div>
+      <div class="status-pill" id="status-pill" aria-live="polite">
+        Bereit
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="editor-panel">
+        <div class="toolbar">
+          <button id="run-button" class="primary">Code ausführen</button>
+          <button id="format-button">Formatieren</button>
+          <button id="reset-button">Zurücksetzen</button>
+        </div>
+        <div id="editor" class="editor" aria-label="Code Editor"></div>
+
+        <section class="ai-panel" aria-label="KI Unterstützungsbereich">
+          <header>
+            <h2>KI-Assistent</h2>
+            <p>
+              Arbeitet 100&nbsp;% clientseitig mit einem kompakten Sprachmodell.
+            </p>
+          </header>
+          <div class="ai-actions">
+            <button id="ai-complete-button" class="primary">
+              KI Vorschlag
+            </button>
+            <button id="ai-explain-button">Code erklären</button>
+          </div>
+          <div class="ai-output" id="ai-output">
+            <div class="placeholder">
+              Aktiviere eine KI-Aktion, um Ergebnisse zu sehen.
+            </div>
+          </div>
+        </section>
+      </section>
+
+      <section class="preview-panel" aria-label="Live Vorschau">
+        <div class="toolbar">
+          <span>Live Vorschau</span>
+        </div>
+        <iframe id="preview-frame" title="Code Vorschau"></iframe>
+        <div class="console-output" id="console-output">
+          <header>Konsolen-Ausgabe</header>
+          <pre id="console-log"></pre>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>
