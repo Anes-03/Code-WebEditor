@@ -1482,6 +1482,90 @@ function savePanelVisibility(config) {
   }
 }
 
+function updateWorkspaceLayout(config = panelVisibilityConfig) {
+  const workspace = document.querySelector(".workspace");
+  if (!workspace) {
+    return;
+  }
+
+  const fileVisible = config["file-sidebar"] !== false;
+  const editorVisible = config["editor-panel"] !== false;
+  const previewVisible = config["preview-panel"] !== false;
+  const consoleVisible = config["console-panel"] !== false;
+  const chatVisible = config["chat-panel"] !== false;
+
+  const hasSplitColumn = previewVisible && consoleVisible;
+  const topAreas = [];
+  const bottomAreas = [];
+  const columns = [];
+
+  if (fileVisible) {
+    columns.push("minmax(220px, 260px)");
+    topAreas.push("file-sidebar");
+    if (hasSplitColumn) {
+      bottomAreas.push("file-sidebar");
+    }
+  }
+
+  if (editorVisible) {
+    columns.push("minmax(0, 1.1fr)");
+    topAreas.push("editor-panel");
+    if (hasSplitColumn) {
+      bottomAreas.push("editor-panel");
+    }
+  }
+
+  if (previewVisible || consoleVisible) {
+    columns.push("minmax(320px, 0.95fr)");
+    topAreas.push(previewVisible ? "preview-panel" : "console-panel");
+    if (hasSplitColumn) {
+      bottomAreas.push("console-panel");
+    }
+  }
+
+  if (chatVisible) {
+    columns.push("minmax(260px, 0.85fr)");
+    topAreas.push("chat-panel");
+    if (hasSplitColumn) {
+      bottomAreas.push("chat-panel");
+    }
+  }
+
+  if (!topAreas.length) {
+    workspace.style.removeProperty("--workspace-columns");
+    workspace.style.removeProperty("--workspace-rows");
+    workspace.style.setProperty("--workspace-areas", "none");
+    return;
+  }
+
+  workspace.style.setProperty("--workspace-columns", columns.join(" "));
+
+  if (hasSplitColumn) {
+    const bottomRow =
+      bottomAreas.length === topAreas.length ? bottomAreas.join(" ") : topAreas.join(" ");
+    workspace.style.setProperty(
+      "--workspace-rows",
+      "minmax(0, 1fr) minmax(220px, 0.65fr)"
+    );
+    workspace.style.setProperty(
+      "--workspace-areas",
+      `"${topAreas.join(" ")}" "${bottomRow}"`
+    );
+  } else {
+    workspace.style.setProperty("--workspace-rows", "minmax(0, 1fr)");
+    workspace.style.setProperty("--workspace-areas", `"${topAreas.join(" ")}"`);
+  }
+
+  const consolePanel = document.querySelector(PANEL_SELECTOR_MAP["console-panel"]);
+  if (consolePanel) {
+    if (consoleVisible && !previewVisible) {
+      consolePanel.style.minHeight = "320px";
+    } else {
+      consolePanel.style.minHeight = "";
+    }
+  }
+}
+
 function applyPanelVisibility(config = panelVisibilityConfig) {
   Object.entries(PANEL_SELECTOR_MAP).forEach(([key, selector]) => {
     const element = document.querySelector(selector);
@@ -1503,6 +1587,8 @@ function applyPanelVisibility(config = panelVisibilityConfig) {
       toggle.checked = visible;
     }
   });
+
+  updateWorkspaceLayout(config);
 }
 
 function initializeLayoutToggles() {
