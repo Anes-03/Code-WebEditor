@@ -1321,9 +1321,9 @@ a.button {
     if (!anchor) return;
     const href = anchor.getAttribute('href');
     if (!href) return;
-    if (/\.html($|[?#])/i.test(href)) {
+    if (/\\.html($|[?#])/i.test(href)) {
       event.preventDefault();
-      const normalized = href.replace(/^\.\//, '');
+      const normalized = href.replace(/^\\.\\//, '');
       window.parent.postMessage(
         { source: 'webeditor-preview', action: 'navigate', file: normalized },
         '*'
@@ -1446,6 +1446,182 @@ function determinePreviewFileForProject(files, preferred) {
   return findFirstHTMLFile(files);
 }
 
+function loadPanelVisibility() {
+  try {
+    const stored = window.localStorage?.getItem(LAYOUT_TOGGLE_STORAGE_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && typeof parsed === "object") {
+        return parsed;
+      }
+    }
+  } catch (error) {
+    console.warn("Konnte Layout-Konfiguration nicht laden:", error);
+  }
+  return {};
+}
+
+function savePanelVisibility(config) {
+  try {
+    const payload = {};
+    Object.entries(config).forEach(([key, value]) => {
+      if (value === false) {
+        payload[key] = false;
+      }
+    });
+    if (Object.keys(payload).length) {
+      window.localStorage?.setItem(
+        LAYOUT_TOGGLE_STORAGE_KEY,
+        JSON.stringify(payload)
+      );
+    } else {
+      window.localStorage?.removeItem(LAYOUT_TOGGLE_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.warn("Konnte Layout-Konfiguration nicht speichern:", error);
+  }
+}
+
+function applyPanelVisibility(config = panelVisibilityConfig) {
+  Object.entries(PANEL_SELECTOR_MAP).forEach(([key, selector]) => {
+    const element = document.querySelector(selector);
+    if (!element) {
+      return;
+    }
+    const visible = config[key] !== false;
+    element.classList.toggle("is-hidden", !visible);
+  });
+
+  const toggles = document.querySelectorAll('[data-toggle-target]');
+  toggles.forEach((toggle) => {
+    const target = toggle.dataset.toggleTarget;
+    if (!target) {
+      return;
+    }
+    const visible = config[target] !== false;
+    if (toggle.checked !== visible) {
+      toggle.checked = visible;
+    }
+  });
+}
+
+function initializeLayoutToggles() {
+  const toggles = document.querySelectorAll('[data-toggle-target]');
+  if (!toggles.length) {
+    applyPanelVisibility(panelVisibilityConfig);
+    return;
+  }
+
+  toggles.forEach((toggle) => {
+    const target = toggle.dataset.toggleTarget;
+    if (!target) {
+      return;
+    }
+    if (!Object.prototype.hasOwnProperty.call(PANEL_SELECTOR_MAP, target)) {
+      toggle.checked = true;
+      toggle.disabled = true;
+      return;
+    }
+    const visible = panelVisibilityConfig[target] !== false;
+    toggle.checked = visible;
+    toggle.addEventListener("change", () => {
+      panelVisibilityConfig[target] = toggle.checked;
+      savePanelVisibility(panelVisibilityConfig);
+      applyPanelVisibility(panelVisibilityConfig);
+      const label = toggle.parentElement?.textContent?.trim() || target;
+      showToast(toggle.checked ? `${label} eingeblendet` : `${label} ausgeblendet`);
+    });
+  });
+
+  applyPanelVisibility(panelVisibilityConfig);
+}
+
+async function ensurePermission(handle, mode = "read") {
+  if (!handle || typeof handle.requestPermission !== "function") {
+    return true;
+  }
+  try {
+    if (typeof handle.queryPermission === "function") {
+      const current = await handle.queryPermission({ mode });
+      if (current === "granted") {
+        return true;
+      }
+      if (current === "denied") {
+        return false;
+      }
+    }
+    const requested = await handle.requestPermission({ mode });
+    return requested === "granted";
+  } catch (error) {
+    console.warn("Berechtigung konnte nicht eingeholt werden:", error);
+    return false;
+  }
+}
+
+async function collectDirectoryEntries(directoryHandle, prefix, result) {
+  if (!(await ensurePermission(directoryHandle, "read"))) {
+    return;
+  }
+
+  const iterator = typeof directoryHandle.values === "function"
+    ? directoryHandle.values()
+    : null;
+
+  if (!iterator) {
+    console.warn("Directory-Handle unterstützt keine Iteration und wird übersprungen.");
+    return;
+  }
+
+  for await (const entry of iterator) {
+    const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.kind === "file") {
+      if (!(await ensurePermission(entry, "read"))) {
+        continue;
+      }
+      try {
+        const file = await entry.getFile();
+        if (
+          file.type &&
+          !file.type.startsWith("text/") &&
+          !TEXT_FILE_EXTENSIONS.test(relativePath)
+        ) {
+          console.warn(`Übersprungen (nicht-textuell): ${relativePath}`);
+          continue;
+        }
+        if (
+          file.size > 2_097_152 &&
+          !TEXT_FILE_EXTENSIONS.test(relativePath)
+        ) {
+          console.warn(`Übersprungen (Datei zu groß oder unbekanntes Format): ${relativePath}`);
+          continue;
+        }
+        const text = await file.text();
+        result.files[relativePath] = text;
+        result.handles.set(relativePath, entry);
+        result.all.push(relativePath);
+        if (isHTMLFile(relativePath)) {
+          result.htmlCandidates.push(relativePath);
+        }
+      } catch (error) {
+        console.error(`Datei konnte nicht gelesen werden: ${relativePath}`, error);
+      }
+    } else if (entry.kind === "directory") {
+      await collectDirectoryEntries(entry, relativePath, result);
+    }
+  }
+}
+
+async function importDirectoryContents(directoryHandle) {
+  const result = {
+    files: {},
+    handles: new Map(),
+    htmlCandidates: [],
+    all: [],
+  };
+  await collectDirectoryEntries(directoryHandle, "", result);
+  return result;
+}
+
 function createFileIcon(inner) {
   return `<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
     <path d="M6 2h8l4 4v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
@@ -1533,12 +1709,18 @@ const fileListEl = document.getElementById("file-list");
 const newFileButton = document.getElementById("new-file-button");
 const resetFilesButton = document.getElementById("reset-files-button");
 const brandHomeButton = document.getElementById("brand-home");
+const openFolderButton = document.getElementById("open-folder-button");
+const openLocalButton = document.getElementById("open-local-button");
+const saveLocalButton = document.getElementById("save-local-button");
+const localFileInput = document.getElementById("local-file-input");
 
 const renameFileButton = document.getElementById("rename-file-button");
 const startScreenEl = document.getElementById("start-screen");
 const startResumeButton = document.getElementById("start-resume-button");
 const startExampleButton = document.getElementById("start-example-button");
 const startBlankButton = document.getElementById("start-blank-button");
+const startFolderButton = document.getElementById("start-folder-button");
+const startMetaFolder = document.getElementById("start-meta-folder");
 
 let toastTimeout;
 let currentTemplate = loadTemplateType();
@@ -1560,8 +1742,43 @@ let formatButton;
 let previewFrame;
 let previewUpdateTimer = null;
 let currentPreviewFile = determinePreviewFileForProject(projectFiles, activeFile);
+const fileHandles = new Map();
+const canOpenWithFileSystemAccess = typeof window.showOpenFilePicker === "function";
+const canSaveWithFileSystemAccess = typeof window.showSaveFilePicker === "function";
+const canOpenDirectory = typeof window.showDirectoryPicker === "function";
+
+const PANEL_SELECTOR_MAP = {
+  "file-sidebar": ".file-sidebar",
+  "editor-panel": ".editor-panel",
+  "preview-panel": ".preview-panel",
+  "console-panel": ".console-panel",
+  "chat-panel": ".chat-panel",
+};
+
+const LAYOUT_TOGGLE_STORAGE_KEY = "code-webeditor-layout-panels";
+
+const panelVisibilityConfig = {
+  "file-sidebar": true,
+  "editor-panel": true,
+  "preview-panel": true,
+  "console-panel": true,
+  "chat-panel": true,
+  ...loadPanelVisibility(),
+};
+
+const TEXT_FILE_EXTENSIONS = /\.(html?|css|jsx?|tsx?|ts|json|ya?ml|md|txt|svg|xml|cjs|mjs)$/i;
 
 const PREVIEW_UPDATE_DELAY = 350;
+
+if (!canOpenDirectory) {
+  openFolderButton?.setAttribute("disabled", "true");
+  if (openFolderButton && !openFolderButton.title) {
+    openFolderButton.title = "Ordnerimport wird von diesem Browser nicht unterstützt.";
+  }
+  startFolderButton?.classList.add("hidden");
+  startFolderButton?.setAttribute("disabled", "true");
+  startMetaFolder?.classList.add("hidden");
+}
 
 function setStatus(message, type = "info") {
   if (!statusPill) return;
@@ -1788,6 +2005,7 @@ function syncEditorWithActiveFile(options = {}) {
     resetButton && (resetButton.disabled = true);
     formatButton && (formatButton.disabled = true);
     renameFileButton && (renameFileButton.disabled = true);
+    saveLocalButton && (saveLocalButton.disabled = true);
     if (options.focus) {
       typeof editorInstance.blur === "function" && editorInstance.blur();
     }
@@ -1800,6 +2018,7 @@ function syncEditorWithActiveFile(options = {}) {
   resetButton && (resetButton.disabled = false);
   formatButton && (formatButton.disabled = false);
   renameFileButton && (renameFileButton.disabled = false);
+  saveLocalButton && (saveLocalButton.disabled = false);
   const meta = getLanguageMeta(activeFile);
   const fallback = getDefaultContentForFile(activeFile);
   const nextValue = projectFiles[activeFile] ?? fallback;
@@ -1880,6 +2099,9 @@ function handleRenameFile() {
     return;
   }
 
+  const oldName = activeFile;
+  const existingHandle = fileHandles.get(oldName);
+
   const newName = window.prompt("Neuer Dateiname?", activeFile);
   if (!newName) {
     return;
@@ -1914,8 +2136,17 @@ function handleRenameFile() {
   activeFile = trimmed;
   saveProjectFiles();
   saveActiveFileName(activeFile);
+  fileHandles.delete(oldName);
+  if (existingHandle) {
+    fileHandles.set(trimmed, existingHandle);
+  }
   renderFileList();
   syncEditorWithActiveFile({ focus: true });
+  if (currentPreviewFile === oldName) {
+    currentPreviewFile = isHTMLFile(trimmed)
+      ? trimmed
+      : determinePreviewFileForProject(projectFiles, trimmed);
+  }
   if (isHTMLFile(activeFile)) {
     currentPreviewFile = activeFile;
     updatePreview({ resetLogs: true, silent: true });
@@ -1938,6 +2169,7 @@ function handleResetProject() {
   projectFiles = templateSnapshot;
   const templateNames = Object.keys(projectFiles);
   activeFile = templateNames.length ? templateNames[0] : null;
+  fileHandles.clear();
   saveProjectFiles();
   saveActiveFileName(activeFile);
   saveTemplateType(currentTemplate);
@@ -1989,11 +2221,277 @@ function schedulePreviewUpdate() {
   }, PREVIEW_UPDATE_DELAY);
 }
 
+async function importFileHandle(handle) {
+  try {
+    const hasPermission = await ensurePermission(handle, "read");
+    if (!hasPermission) {
+      setStatus("Zugriff verweigert", "warning");
+      showToast("Keine Berechtigung für Datei");
+      return;
+    }
+    const file = await handle.getFile();
+    const text = await file.text();
+    const name = file.name;
+
+    projectFiles = {
+      ...projectFiles,
+      [name]: text,
+    };
+    fileHandles.set(name, handle);
+    activeFile = name;
+    currentTemplate = "blank";
+    saveTemplateType(currentTemplate);
+    currentPreviewFile = isHTMLFile(name)
+      ? name
+      : determinePreviewFileForProject(projectFiles, currentPreviewFile);
+    saveProjectFiles();
+    saveActiveFileName(activeFile);
+    renderFileList();
+    syncEditorWithActiveFile({ focus: true });
+    hideStartScreen();
+    if (isHTMLFile(name)) {
+      updatePreview({ resetLogs: true, silent: true });
+    } else {
+      schedulePreviewUpdate();
+    }
+    setStatus(`Datei geladen: ${name}`, "success");
+    showToast("Lokale Datei geöffnet");
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      return;
+    }
+    console.error("Lokale Datei konnte nicht geladen werden:", error);
+    setStatus("Datei konnte nicht geladen werden", "error");
+    showToast("Fehler beim Öffnen der Datei");
+  }
+}
+
+async function handleOpenLocalFile() {
+  if (canOpenWithFileSystemAccess) {
+    try {
+      const handles = await window.showOpenFilePicker({
+        multiple: true,
+      });
+      if (!handles?.length) {
+        return;
+      }
+      for (const handle of handles) {
+        // eslint-disable-next-line no-await-in-loop
+        await importFileHandle(handle);
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+      console.error("Dateiauswahl abgebrochen oder fehlgeschlagen:", error);
+      setStatus("Datei konnte nicht geöffnet werden", "error");
+      showToast("Fehler beim Öffnen");
+    }
+  } else if (localFileInput) {
+    localFileInput.value = "";
+    localFileInput.click();
+    setStatus("Wähle eine Datei vom Gerät", "info");
+  } else {
+    setStatus("Lokaler Dateizugriff nicht verfügbar", "warning");
+    showToast("Browser unterstützt kein lokales Dateisystem");
+  }
+}
+
+async function handleOpenLocalFolder() {
+  if (!canOpenDirectory) {
+    setStatus("Ordnerimport wird nicht unterstützt", "warning");
+    showToast("Ordnerimport nicht verfügbar");
+    return;
+  }
+
+  try {
+    const directoryHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    if (!directoryHandle) {
+      return;
+    }
+
+    const permissionGranted = await ensurePermission(directoryHandle, "readwrite");
+    if (!permissionGranted) {
+      setStatus("Zugriff auf Ordner verweigert", "warning");
+      showToast("Ordnerzugriff verweigert");
+      return;
+    }
+
+    const imported = await importDirectoryContents(directoryHandle);
+    const importedNames = imported.all;
+
+    if (!importedNames.length) {
+      setStatus("Keine passenden Dateien gefunden", "warning");
+      showToast("Ordner enthält keine unterstützten Dateien");
+      return;
+    }
+
+    projectFiles = { ...imported.files };
+    fileHandles.clear();
+    imported.handles.forEach((handle, path) => {
+      fileHandles.set(path, handle);
+    });
+
+    const preferredHtml = imported.htmlCandidates[0];
+    const fallbackFile = importedNames[0];
+    const previewTarget = determinePreviewFileForProject(
+      projectFiles,
+      preferredHtml || fallbackFile
+    );
+    activeFile = previewTarget || preferredHtml || fallbackFile || null;
+    currentPreviewFile = previewTarget;
+
+    currentTemplate = "blank";
+    saveProjectFiles();
+    saveTemplateType(currentTemplate);
+    saveActiveFileName(activeFile);
+    renderFileList();
+    syncEditorWithActiveFile({ focus: true });
+
+    if (activeFile && isHTMLFile(activeFile)) {
+      updatePreview({ resetLogs: true, silent: true });
+    } else if (activeFile) {
+      schedulePreviewUpdate();
+    } else if (previewFrame) {
+      previewFrame.srcdoc = "";
+    }
+
+    hideStartScreen();
+    const importedCount = importedNames.length;
+    const folderName = directoryHandle.name || "lokaler Ordner";
+    setStatus(`Ordner importiert: ${folderName}`, "success");
+    showToast(`${importedCount} Datei${importedCount === 1 ? "" : "en"} importiert`);
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      return;
+    }
+    console.error("Ordner konnte nicht importiert werden:", error);
+    setStatus("Ordnerimport fehlgeschlagen", "error");
+    showToast("Ordnerimport fehlgeschlagen");
+  }
+}
+
+async function handleSaveLocalFile() {
+  if (!activeFile) {
+    setStatus("Keine aktive Datei zum Speichern", "warning");
+    showToast("Keine Datei ausgewählt");
+    return;
+  }
+
+  const content = editorInstance.getValue();
+
+  if (canSaveWithFileSystemAccess) {
+    try {
+      let handle = fileHandles.get(activeFile);
+      if (!handle) {
+        handle = await window.showSaveFilePicker({
+          suggestedName: activeFile,
+        });
+        fileHandles.set(activeFile, handle);
+      }
+      const hasPermission = await ensurePermission(handle, "readwrite");
+      if (!hasPermission) {
+        setStatus("Speichern verweigert", "warning");
+        showToast("Keine Berechtigung zum Speichern");
+        return;
+      }
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      setStatus(`Datei gespeichert: ${activeFile}`, "success");
+      showToast("Lokal gespeichert");
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+      console.error("Speichern fehlgeschlagen:", error);
+      setStatus("Speichern fehlgeschlagen", "error");
+      showToast("Fehler beim Speichern");
+    }
+    return;
+  }
+
+  downloadFile(activeFile, content);
+  setStatus("Download gestartet", "info");
+  showToast("Datei heruntergeladen");
+}
+
+function handleLocalFileInputChange(event) {
+  const input = event.target;
+  const files = Array.from(input.files || []);
+  if (!files.length) {
+    return;
+  }
+
+  (async () => {
+    for (const file of files) {
+      try {
+        if (
+          file.type &&
+          !file.type.startsWith("text/") &&
+          !TEXT_FILE_EXTENSIONS.test(file.name)
+        ) {
+          console.warn(`Übersprungen (nicht-textuell): ${file.name}`);
+          continue;
+        }
+        if (file.size > 2_097_152 && !TEXT_FILE_EXTENSIONS.test(file.name)) {
+          console.warn(`Übersprungen (Datei zu groß oder unbekanntes Format): ${file.name}`);
+          continue;
+        }
+        const text = await file.text();
+        const name = file.name;
+        projectFiles = {
+          ...projectFiles,
+          [name]: text,
+        };
+        fileHandles.delete(name);
+        activeFile = name;
+        currentTemplate = "blank";
+        saveTemplateType(currentTemplate);
+        currentPreviewFile = isHTMLFile(name)
+          ? name
+          : determinePreviewFileForProject(projectFiles, currentPreviewFile);
+        saveProjectFiles();
+        saveActiveFileName(activeFile);
+        renderFileList();
+        syncEditorWithActiveFile({ focus: true });
+        hideStartScreen();
+        if (isHTMLFile(name)) {
+          updatePreview({ resetLogs: true, silent: true });
+        } else {
+          schedulePreviewUpdate();
+        }
+        setStatus(`Datei geladen: ${name}`, "success");
+        showToast("Datei importiert");
+      } catch (error) {
+        console.error("Datei konnte nicht gelesen werden:", error);
+        setStatus("Datei konnte nicht geladen werden", "error");
+        showToast("Fehler beim Lesen der Datei");
+      }
+    }
+  })().finally(() => {
+    input.value = "";
+  });
+}
+
+function downloadFile(name, content) {
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name || "datei.txt";
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
 function beginProjectFromTemplate(templateType) {
   currentTemplate = templateType;
   const templateFiles = { ...getTemplateFiles(templateType) };
   projectFiles = templateFiles;
   activeFile = loadActiveFileName(projectFiles);
+  fileHandles.clear();
   renderFileList();
   syncEditorWithActiveFile({ focus: false });
   saveProjectFiles();
@@ -2040,6 +2538,20 @@ function updateStartScreenOptions() {
   } else {
     startResumeButton.classList.add("hidden");
   }
+
+  if (startFolderButton) {
+    if (canOpenDirectory) {
+      startFolderButton.classList.remove("hidden");
+      startFolderButton.removeAttribute("disabled");
+    } else {
+      startFolderButton.classList.add("hidden");
+      startFolderButton.setAttribute("disabled", "true");
+    }
+  }
+
+  if (startMetaFolder) {
+    startMetaFolder.classList.toggle("hidden", !canOpenDirectory);
+  }
 }
 
 function handleStartResume() {
@@ -2052,6 +2564,7 @@ function handleStartResume() {
   projectFiles = stored;
   currentTemplate = loadTemplateType();
   activeFile = loadActiveFileName(projectFiles);
+  fileHandles.clear();
   renderFileList();
   syncEditorWithActiveFile({ focus: false });
   currentPreviewFile = determinePreviewFileForProject(projectFiles, activeFile);
@@ -2139,9 +2652,27 @@ function buildPreviewDocument(entryFile) {
     ? entryFile
     : determinePreviewFileForProject(projectFiles, "index.html");
 
-  if (!targetFile) {
-    return "";
-  }
+  const cssBlocks = Object.entries(projectFiles)
+    .filter(([name]) => /\.css$/i.test(name))
+    .map(([, content]) => (content || "").trim())
+    .filter(Boolean);
+
+  const jsBlocks = Object.entries(projectFiles)
+    .filter(([name]) => /\.m?js$/i.test(name))
+    .map(([, content]) => (content || "").trim())
+    .filter(Boolean);
+
+const stylesMarkup = cssBlocks.length
+    ? `<style data-origin="webeditor-styles">
+${cssBlocks.join("\n\n")}
+</style>`
+    : "";
+
+const scriptsMarkup = jsBlocks.length
+    ? `<script data-origin="webeditor-scripts">
+${jsBlocks.join("\n\n")}
+</scr` + `ipt>`
+    : "";
 
   const consoleBridgeSource = `(function() {
     const send = (level, data) => window.parent.postMessage(
@@ -2182,6 +2713,9 @@ function buildPreviewDocument(entryFile) {
     document.addEventListener(
       "click",
       function (event) {
+        if (event.defaultPrevented) {
+          return;
+        }
         const anchor = event.target.closest("a");
         if (!anchor) {
           return;
@@ -2190,9 +2724,9 @@ function buildPreviewDocument(entryFile) {
         if (!href) {
           return;
         }
-        if (/\\.html($|[?#])/i.test(href)) {
+        if (/\.html($|[?#])/i.test(href)) {
           event.preventDefault();
-          const normalized = href.replace(/^\\.\\//, "");
+          const normalized = href.replace(/^\.\//, "");
           window.parent.postMessage(
             { source: "webeditor-preview", action: "navigate", file: normalized },
             "*"
@@ -2207,30 +2741,42 @@ function buildPreviewDocument(entryFile) {
 ${consoleBridgeSource}
 </scr` + `ipt>`;
 
-  const baseHTML =
-    projectFiles[targetFile] ?? getDefaultContentForFile(targetFile) ?? "";
+  if (!targetFile) {
+    const message = activeFile
+      ? `Für die Datei <code>${activeFile}</code> steht keine HTML-Vorschau zur Verfügung.`
+      : "Keine HTML-Datei vorhanden.";
+    const placeholderStyles = `<style>
+      :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f172a; color: #e2e8f0; }
+      .preview-placeholder { max-width: 540px; padding: 3rem 2.4rem; text-align: center; background: rgba(15, 23, 42, 0.78); border-radius: 18px; border: 1px solid rgba(148, 163, 184, 0.22); box-shadow: 0 32px 90px rgba(2, 6, 23, 0.55); display: grid; gap: 1.4rem; }
+      .preview-placeholder h2 { margin: 0; font-size: 1.6rem; }
+      .preview-placeholder p { margin: 0; line-height: 1.6; }
+      .preview-placeholder code { background: rgba(148, 163, 184, 0.18); border-radius: 6px; padding: 0.2rem 0.4rem; }
+    </style>`;
 
-  const cssBlocks = Object.entries(projectFiles)
-    .filter(([name]) => /\.css$/i.test(name))
-    .map(([, content]) => (content || "").trim())
-    .filter(Boolean);
+    return `<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Live Vorschau</title>
+    ${stylesMarkup}
+    ${placeholderStyles}
+  </head>
+  <body>
+    ${consoleScriptTag}
+    <main class="preview-placeholder">
+      <h2>Keine HTML-Vorschau</h2>
+      <p>${message}</p>
+      <p>Füge eine <code>.html</code>-Datei hinzu oder wechsle zu einer vorhandenen Seite, um die Vorschau zu aktivieren.</p>
+    </main>
+    ${scriptsMarkup}
+  </body>
+</html>`;
+  }
 
-  const jsBlocks = Object.entries(projectFiles)
-    .filter(([name]) => /\.m?js$/i.test(name))
-    .map(([, content]) => (content || "").trim())
-    .filter(Boolean);
-
-  const stylesMarkup = cssBlocks.length
-    ? `<style data-origin="webeditor-styles">
-${cssBlocks.join("\n\n")}
-</style>`
-    : "";
-
-  const scriptsMarkup = jsBlocks.length
-    ? `<script data-origin="webeditor-scripts">
-${jsBlocks.join("\n\n")}
-</scr` + `ipt>`
-    : "";
+  const baseHTMLSource = projectFiles[targetFile];
+  const fallbackHTML = getDefaultContentForFile(targetFile) ?? "";
+  const baseHTML = baseHTMLSource !== undefined ? baseHTMLSource : fallbackHTML;
 
   if (!/<body[\s>]/i.test(baseHTML)) {
     return `<!DOCTYPE html>
@@ -2252,12 +2798,14 @@ ${jsBlocks.join("\n\n")}
 
   if (stylesMarkup) {
     if (/<\/head>/i.test(output)) {
-      output = output.replace(/<\/head>/i, `${stylesMarkup}\n</head>`);
+      output = output.replace(/<\/head>/i, `${stylesMarkup}
+</head>`);
     } else {
       output = output.replace(
         /<body([^>]*)>/i,
         function (match, attrs) {
-          return `${stylesMarkup}\n<body${attrs}>`;
+          return `${stylesMarkup}
+<body${attrs}>`;
         }
       );
     }
@@ -2269,14 +2817,17 @@ ${jsBlocks.join("\n\n")}
 
   if (scriptsMarkup) {
     if (/<\/body>/i.test(output)) {
-      output = output.replace(/<\/body>/i, `${scriptsMarkup}\n</body>`);
+      output = output.replace(/<\/body>/i, `${scriptsMarkup}
+</body>`);
     } else {
-      output = `${output}\n${scriptsMarkup}`;
+      output = `${output}
+${scriptsMarkup}`;
     }
   }
 
   return output;
 }
+
 
 function updatePreview({ resetLogs = false, silent = false } = {}) {
   if (!activeFile) {
@@ -2362,7 +2913,16 @@ function handlePreviewNavigate(fileName) {
     }
   }
 
+  if (activeFile && activeFile !== target) {
+    projectFiles[activeFile] = editorInstance.getValue();
+    saveProjectFiles();
+  }
+
   currentPreviewFile = target;
+  activeFile = target;
+  saveActiveFileName(activeFile);
+  renderFileList();
+  syncEditorWithActiveFile({ focus: false });
   updatePreview({ resetLogs: true, silent: true });
   setStatus(`Seite geladen: ${target}`, "info");
 }
@@ -2436,14 +2996,20 @@ formatButton?.addEventListener("click", formatCode);
 newFileButton?.addEventListener("click", handleCreateFile);
 resetFilesButton?.addEventListener("click", handleResetProject);
 renameFileButton?.addEventListener("click", handleRenameFile);
+openLocalButton?.addEventListener("click", handleOpenLocalFile);
+saveLocalButton?.addEventListener("click", handleSaveLocalFile);
+localFileInput?.addEventListener("change", handleLocalFileInputChange);
 brandHomeButton?.addEventListener("click", (event) => {
   event.preventDefault();
   showStartScreen();
   setStatus("Projekt auswählen", "info");
 });
+startFolderButton?.addEventListener("click", handleOpenLocalFolder);
 startResumeButton?.addEventListener("click", handleStartResume);
 startExampleButton?.addEventListener("click", handleStartExample);
 startBlankButton?.addEventListener("click", handleStartBlank);
+openFolderButton?.addEventListener("click", handleOpenLocalFolder);
+initializeLayoutToggles();
 
 showStartScreen();
 

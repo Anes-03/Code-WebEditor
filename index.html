@@ -50,26 +50,88 @@
         aria-labelledby="start-screen-title"
         aria-describedby="start-screen-description"
       >
-        <header>
-          <h2 id="start-screen-title">Willkommen im Code WebEditor</h2>
-          <p>Lege los mit einem leeren Projekt oder starte mit unserem Beispiel, das du komplett anpassen kannst.</p>
-        </header>
-        <div class="start-actions">
-          <button id="start-resume-button" class="primary hidden" type="button">
-            Gespeichertes Projekt fortsetzen
-          </button>
-          <button id="start-example-button" class="secondary" type="button">
-            Beispielprojekt öffnen
-          </button>
-          <button id="start-blank-button" class="secondary" type="button">
-            Leeres Projekt starten
-          </button>
-        </div>
-        <div id="start-screen-description" class="start-info">
-          Du kannst deine Auswahl jederzeit über den Projekt-Reset zurücksetzen oder neue Dateien hinzufügen und umbenennen.
+        <div class="start-card__layout">
+          <div class="start-card__content">
+            <span class="start-card__badge">Dein lokaler Playground</span>
+            <h2 id="start-screen-title">Willkommen im Code WebEditor</h2>
+            <p id="start-screen-description">
+              Wähle ein Ausgangsprojekt, passe HTML&nbsp;·&nbsp;CSS&nbsp;·&nbsp;JS live an und sieh das Ergebnis sofort in der Vorschau.
+            </p>
+            <ul class="start-card__highlights">
+              <li>
+                <span class="highlight-icon">⚡</span>
+                <div>
+                  <strong>Sofortige Vorschau</strong>
+                  <p>Änderungen an allen Dateien erscheinen automatisch im rechten Panel.</p>
+                </div>
+              </li>
+              <li>
+                <span class="highlight-icon">🧰</span>
+                <div>
+                  <strong>Modulares Beispielprojekt</strong>
+                  <p>Mehrere Unterseiten inklusive Navigation, Theme-Toggle &amp; Interaktionen.</p>
+                </div>
+              </li>
+              <li>
+                <span class="highlight-icon">📁</span>
+                <div>
+                  <strong>Lokale Dateien &amp; Ordner</strong>
+                  <p>Importiere bestehende Projekte vom Gerät und speichere Änderungen direkt zurück.</p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <aside class="start-card__panel">
+            <h3 class="start-card__panel-title">Schnellstart</h3>
+            <div class="start-card__actions">
+              <button id="start-resume-button" class="button-pair primary hidden" type="button">
+                Gespeichertes Projekt fortsetzen
+              </button>
+              <button id="start-example-button" class="button-pair primary" type="button">
+                Beispielprojekt öffnen
+              </button>
+              <button id="start-folder-button" class="button-pair secondary" type="button">
+                Ordner importieren …
+              </button>
+              <button id="start-blank-button" class="button-pair secondary" type="button">
+                Leeres Projekt starten
+              </button>
+            </div>
+            <div class="start-card__meta">
+              <div>
+                <span class="meta-label">Beispielumfang</span>
+                <strong>4 Dateien</strong>
+                <p>Mehrseitiges Layout mit Navigation, Theme-Switch &amp; Dialog.</p>
+              </div>
+              <div>
+                <span class="meta-label">Autopreview</span>
+                <strong>350&nbsp;ms</strong>
+                <p>Änderungen an HTML, CSS &amp; JS werden automatisch übernommen.</p>
+              </div>
+              <div id="start-meta-folder">
+                <span class="meta-label">Lokaler Import</span>
+                <strong>Ordner &amp; Dateien</strong>
+                <p>Erfordert einen Browser mit File System Access API (z.&nbsp;B. Chromium).</p>
+              </div>
+              <div>
+                <span class="meta-label">Dateiwerkzeug</span>
+                <strong>Erstellen · Umbenennen · Zurücksetzen</strong>
+                <p>Verwalte deine Dateien direkt in der Sidebar.</p>
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
+
+    <section class="layout-controls" role="group" aria-label="Bereiche ein- und ausblenden">
+      <span>Bereiche</span>
+      <label><input type="checkbox" data-toggle-target="file-sidebar" checked /> Dateien</label>
+      <label><input type="checkbox" data-toggle-target="editor-panel" checked /> Editor</label>
+      <label><input type="checkbox" data-toggle-target="preview-panel" checked /> Vorschau</label>
+      <label><input type="checkbox" data-toggle-target="console-panel" checked /> Konsole</label>
+      <label><input type="checkbox" data-toggle-target="chat-panel" checked /> Chat</label>
+    </section>
 
     <main class="workspace">
       <aside class="file-sidebar" aria-label="Dateien">
@@ -132,7 +194,16 @@
         </header>
         <ul id="file-list" class="file-list" role="listbox" aria-label="Projektdateien"></ul>
         <div class="file-sidebar-footer">
-          <button id="reset-files-button" class="ghost" title="Projektdateien zurücksetzen">
+          <button id="open-folder-button" class="ghost" type="button">
+            Ordner importieren …
+          </button>
+          <button id="open-local-button" class="ghost" type="button">
+            Lokale Datei öffnen …
+          </button>
+          <button id="save-local-button" class="ghost" type="button">
+            Datei speichern
+          </button>
+          <button id="reset-files-button" class="ghost" title="Projektdateien zurücksetzen" type="button">
             Projekt zurücksetzen
           </button>
         </div>
@@ -161,10 +232,36 @@
           <pre id="console-log"></pre>
         </div>
       </section>
+
+      <aside class="chat-panel" aria-label="Editor Chat (Demnächst)">
+        <div class="toolbar">
+          <span>AI-Chat (In Vorbereitung)</span>
+        </div>
+        <div class="chat-content">
+          <div class="chat-messages">
+            <div class="chat-message chat-message--system">
+              <span class="chat-message__title">⚙️ Hinweis</span>
+              <p>
+                Hier entsteht ein Chat-Bereich für deinen KI-Assistenten. Bald kannst du direkt aus dem Editor heraus Fragen stellen
+                oder Code-Vorschläge anfordern.
+              </p>
+            </div>
+            <div class="chat-message chat-message--placeholder">
+              <p>Bis dahin kannst du den Editor wie gewohnt verwenden und Änderungen live in der Vorschau beobachten.</p>
+            </div>
+          </div>
+          <form class="chat-input" action="javascript:void(0);" aria-disabled="true">
+            <textarea placeholder="Chat-Eingabe (demnächst verfügbar)" disabled></textarea>
+            <button type="button" disabled>Demnächst</button>
+          </form>
+        </div>
+      </aside>
     </main>
+
+    <input type="file" id="local-file-input" multiple style="display: none" />
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    <script type="module" src="main.js"></script>
+    <script src="main.js"></script>
   </body>
 </html>

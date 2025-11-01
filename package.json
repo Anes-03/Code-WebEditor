@@ -1,0 +1,25 @@
+{
+  "name": "code-webeditor",
+  "version": "1.0.0",
+  "description": "A complete in-browser code editor with a live preview.",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anes-03/Code-WebEditor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Anes-03/Code-WebEditor/issues"
+  },
+  "homepage": "https://github.com/Anes-03/Code-WebEditor#readme",
+  "dependencies": {
+    "acorn": "^8.15.0",
+    "playwright": "^1.56.1"
+  }
+}
