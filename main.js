@@ -1591,6 +1591,148 @@ function applyPanelVisibility(config = panelVisibilityConfig) {
   updateWorkspaceLayout(config);
 }
 
+function initializeSettingsModal() {
+  if (!openSettingsButton || !settingsModal) {
+    return;
+  }
+
+  const dialog = settingsModal.querySelector(".settings-modal__dialog");
+  if (!dialog) {
+    return;
+  }
+
+  const closeControls = settingsModal.querySelectorAll("[data-close-settings]");
+  const overlay = settingsModal.querySelector(".settings-modal__overlay");
+  const tabButtons = settingsModal.querySelectorAll("[data-settings-tab]");
+  const panels = settingsModal.querySelectorAll("[data-settings-panel]");
+  let focusableElements = [];
+  let previouslyFocusedElement = null;
+
+  const selectors =
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+  function trapFocus(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeModal();
+      return;
+    }
+
+    if (event.key !== "Tab" || !focusableElements.length) {
+      return;
+    }
+
+    const first = focusableElements[0];
+    const last = focusableElements[focusableElements.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey) {
+      if (active === first || !focusableElements.includes(active)) {
+        event.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  }
+
+  function activateTab(target) {
+    if (!target) {
+      return;
+    }
+
+    tabButtons.forEach((button) => {
+      const isActive = button.dataset.settingsTab === target;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
+    });
+
+    panels.forEach((panel) => {
+      const matches = panel.dataset.settingsPanel === target;
+      panel.classList.toggle("is-active", matches);
+      panel.toggleAttribute("hidden", !matches);
+    });
+  }
+
+  function openModal() {
+    if (settingsModal.classList.contains("is-open")) {
+      return;
+    }
+    previouslyFocusedElement = document.activeElement;
+    settingsModal.classList.add("is-open");
+    settingsModal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("modal-open");
+    focusableElements = Array.from(dialog.querySelectorAll(selectors)).filter(
+      (element) => !element.hasAttribute("disabled") && !element.getAttribute("aria-hidden")
+    );
+    (focusableElements[0] || dialog).focus();
+    document.addEventListener("keydown", trapFocus);
+    showToast("Einstellungen geöffnet");
+  }
+
+  function closeModal() {
+    settingsModal.classList.remove("is-open");
+    settingsModal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("modal-open");
+    document.removeEventListener("keydown", trapFocus);
+    focusableElements = [];
+    if (previouslyFocusedElement && typeof previouslyFocusedElement.focus === "function") {
+      previouslyFocusedElement.focus();
+    } else if (openSettingsButton) {
+      openSettingsButton.focus();
+    }
+  }
+
+  openSettingsButton.addEventListener("click", openModal);
+  closeControls.forEach((control) => {
+    control.addEventListener("click", closeModal);
+  });
+
+  if (overlay) {
+    overlay.addEventListener("click", closeModal);
+  }
+
+  tabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const target = button.dataset.settingsTab;
+      activateTab(target);
+    });
+  });
+
+  if (tabButtons.length) {
+    const active = Array.from(tabButtons).find((button) => button.classList.contains("is-active"));
+    activateTab(active?.dataset.settingsTab || tabButtons[0].dataset.settingsTab);
+  }
+}
+
+function initializeChatActions() {
+  const actionButtons = document.querySelectorAll("[data-chat-action]");
+  if (!actionButtons.length) {
+    return;
+  }
+
+  const actionMessages = {
+    stop: "Antworten lassen sich hier bald stoppen.",
+    regenerate: "Neu generieren folgt in Kürze.",
+    clear: "Der Chat-Verlauf wird bald löschbar sein.",
+    attach: "Datei-Anhänge kommen demnächst.",
+  };
+
+  actionButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.chatAction;
+      const message =
+        (action && actionMessages[action]) ||
+        "Diese Chat-Aktion ist bald verfügbar.";
+      showToast(message);
+      setStatus("Chat-Funktionen in Vorbereitung", "info");
+    });
+  });
+}
+
 function initializeLayoutToggles() {
   const toggles = document.querySelectorAll('[data-toggle-target]');
   if (!toggles.length) {
@@ -1799,6 +1941,8 @@ const openFolderButton = document.getElementById("open-folder-button");
 const openLocalButton = document.getElementById("open-local-button");
 const saveLocalButton = document.getElementById("save-local-button");
 const localFileInput = document.getElementById("local-file-input");
+const openSettingsButton = document.getElementById("open-settings-button");
+const settingsModal = document.getElementById("settings-modal");
 
 const renameFileButton = document.getElementById("rename-file-button");
 const startScreenEl = document.getElementById("start-screen");
@@ -3095,6 +3239,8 @@ startResumeButton?.addEventListener("click", handleStartResume);
 startExampleButton?.addEventListener("click", handleStartExample);
 startBlankButton?.addEventListener("click", handleStartBlank);
 openFolderButton?.addEventListener("click", handleOpenLocalFolder);
+initializeSettingsModal();
+initializeChatActions();
 initializeLayoutToggles();
 
 showStartScreen();
