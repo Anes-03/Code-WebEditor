@@ -2,6 +2,21 @@ const FILE_STORAGE_KEY = "code-webeditor-project-files";
 const ACTIVE_FILE_STORAGE_KEY = "code-webeditor-active-file";
 const TEMPLATE_STORAGE_KEY = "code-webeditor-template";
 const NO_FILE_PLACEHOLDER = "Erstelle über das + eine neue Datei, um zu starten.";
+const GEMINI_API_KEY_STORAGE_KEY = "code-webeditor-gemini-api-key";
+const GEMINI_MODEL_STORAGE_KEY = "code-webeditor-gemini-model";
+const CHAT_PROVIDER_GEMINI = {
+  id: "gemini",
+  name: "Google Gemini",
+  endpoint: "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+  requiresKey: true,
+};
+const GEMINI_MODELS_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_DEFAULT_MODELS = [
+  { name: "models/gemini-1.5-flash-latest", display: "Gemini 1.5 Flash (Latest)" },
+  { name: "models/gemini-1.5-pro-latest", display: "Gemini 1.5 Pro (Latest)" },
+  { name: "models/gemini-1.0-pro", display: "Gemini 1.0 Pro" },
+];
+let cachedGeminiModels = [];
 
 const DEFAULT_SNIPPETS = {
   html: `<!DOCTYPE html>
@@ -1482,6 +1497,467 @@ function savePanelVisibility(config) {
   }
 }
 
+function loadGeminiApiKey() {
+  try {
+    const stored = window.localStorage?.getItem(GEMINI_API_KEY_STORAGE_KEY);
+    return typeof stored === "string" ? stored : "";
+  } catch (error) {
+    console.warn("Konnte Gemini-API-Schlüssel nicht laden:", error);
+    return "";
+  }
+}
+
+function saveGeminiApiKey(value) {
+  try {
+    if (value) {
+      window.localStorage?.setItem(GEMINI_API_KEY_STORAGE_KEY, value);
+    } else {
+      window.localStorage?.removeItem(GEMINI_API_KEY_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.warn("Konnte Gemini-API-Schlüssel nicht speichern:", error);
+  }
+}
+
+function clearGeminiApiKey() {
+  saveGeminiApiKey("");
+}
+
+function hasGeminiApiKey() {
+  return Boolean(loadGeminiApiKey());
+}
+
+function loadGeminiModel() {
+  try {
+    return window.localStorage?.getItem(GEMINI_MODEL_STORAGE_KEY) || "";
+  } catch (error) {
+    console.warn("Konnte Gemini-Modell nicht laden:", error);
+    return "";
+  }
+}
+
+function saveGeminiModel(model) {
+  try {
+    if (model) {
+      window.localStorage?.setItem(GEMINI_MODEL_STORAGE_KEY, model);
+    } else {
+      window.localStorage?.removeItem(GEMINI_MODEL_STORAGE_KEY);
+    }
+  } catch (error) {
+    console.warn("Konnte Gemini-Modell nicht speichern:", error);
+  }
+}
+
+function getSelectedGeminiModel() {
+  return loadGeminiModel() || GEMINI_DEFAULT_MODELS[0]?.name || "";
+}
+
+async function fetchGeminiModels(apiKey) {
+  const url = `${GEMINI_MODELS_ENDPOINT}?pageSize=50&key=${encodeURIComponent(apiKey)}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!response.ok) {
+    const errorPayload = await response.json().catch(() => ({}));
+    const message =
+      errorPayload?.error?.message || `Gemini Models API antwortete mit Status ${response.status}`;
+    throw new Error(message);
+  }
+  const payload = await response.json();
+  const models = Array.isArray(payload.models) ? payload.models : [];
+  return models
+    .map((model) => {
+      const name = model?.name || "";
+      const display = model?.displayName || name.split("/").pop() || name;
+      return { name, display };
+    })
+    .filter((model) => model.name && model.display)
+    .sort((a, b) => a.display.localeCompare(b.display));
+}
+
+function getActiveChatProvider() {
+  return CHAT_PROVIDER_GEMINI;
+}
+
+function updateGeminiStatusMessage() {
+  if (!geminiKeyStatus) {
+    return;
+  }
+  const hasKey = hasGeminiApiKey();
+  geminiKeyStatus.textContent = hasKey
+    ? "Gemini ist verbunden. Der Schlüssel wird lokal im Browser gespeichert."
+    : "Kein Schlüssel hinterlegt.";
+  geminiKeyStatus.dataset.state = hasKey ? "connected" : "empty";
+}
+
+function updateGeminiTestStatus(message, state = "idle") {
+  if (!geminiTestStatus) {
+    return;
+  }
+  geminiTestStatus.textContent = message;
+  geminiTestStatus.dataset.state = state;
+}
+
+function populateGeminiModelSelect(models = cachedGeminiModels, preferredModel = loadGeminiModel()) {
+  if (!geminiModelSelect) {
+    return;
+  }
+  const available = models?.length ? models : GEMINI_DEFAULT_MODELS;
+  cachedGeminiModels = available;
+  const currentValue = preferredModel || loadGeminiModel();
+
+  geminiModelSelect.innerHTML = `<option value="">Modell auswählen …</option>`;
+  available.forEach((model) => {
+    const option = document.createElement("option");
+    option.value = model.name;
+    option.textContent = model.display || model.name;
+    geminiModelSelect.appendChild(option);
+  });
+
+  if (currentValue) {
+    const option = Array.from(geminiModelSelect.options).find((opt) => opt.value === currentValue);
+    if (option) {
+      geminiModelSelect.value = currentValue;
+    } else {
+      geminiModelSelect.value = "";
+    }
+  } else {
+    geminiModelSelect.value = "";
+  }
+}
+
+function getChatIntroText() {
+  return hasGeminiApiKey()
+    ? "Gemini ist bereit. Stelle Fragen zu deinem Projekt oder bitte um Code-Vorschläge."
+    : "Hinterlege zuerst deinen Gemini API-Schlüssel in den Einstellungen, um den Chat zu nutzen.";
+}
+
+function renderChatMessages() {
+  if (!chatMessagesContainer) {
+    return;
+  }
+  chatMessagesContainer.innerHTML = "";
+  chatMessagesState.forEach((message) => {
+    const item = document.createElement("div");
+    item.classList.add("chat-message", `chat-message--${message.role}`);
+    if (message.state === "pending") {
+      item.classList.add("chat-message--pending");
+    }
+    if (message.state === "error") {
+      item.classList.add("chat-message--error");
+    }
+
+    const title = document.createElement("span");
+    title.className = "chat-message__title";
+    title.textContent = message.role === "assistant"
+      ? "Gemini"
+      : message.role === "user"
+        ? "Du"
+        : "Hinweis";
+    item.appendChild(title);
+
+    const paragraph = document.createElement("p");
+    paragraph.textContent = message.content;
+    item.appendChild(paragraph);
+
+    chatMessagesContainer.appendChild(item);
+  });
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+}
+
+function appendChatMessage(role, content, state = "complete") {
+  const message = {
+    id: `msg-${nextChatMessageId++}`,
+    role,
+    content,
+    state,
+  };
+  chatMessagesState.push(message);
+  renderChatMessages();
+  updateChatActionStates();
+  return message;
+}
+
+function updateChatMessage(id, updates = {}) {
+  const message = chatMessagesState.find((entry) => entry.id === id);
+  if (!message) {
+    return;
+  }
+  Object.assign(message, updates);
+  renderChatMessages();
+  updateChatActionStates();
+}
+
+function resetChatConversation() {
+  chatMessagesState = [];
+  appendChatMessage("system", getChatIntroText());
+  lastUserPrompt = "";
+  updateChatActionStates();
+}
+
+function refreshChatIntroMessage() {
+  const intro = chatMessagesState.find((entry) => entry.role === "system");
+  if (intro) {
+    intro.content = getChatIntroText();
+    renderChatMessages();
+  }
+}
+
+function setChatBusy(busy) {
+  chatIsBusy = Boolean(busy);
+  if (chatInputForm) {
+    chatInputForm.classList.toggle("is-busy", chatIsBusy);
+  }
+  if (chatActionButtons?.length) {
+    updateChatActionStates();
+  }
+  updateChatAvailability();
+}
+
+function updateChatAvailability() {
+  const hasKey = hasGeminiApiKey();
+  const text = (chatTextarea?.value || "").trim();
+  if (chatTextarea) {
+    chatTextarea.disabled = chatIsBusy || !hasKey;
+    chatTextarea.placeholder = hasKey
+      ? "Beschreibe dein Anliegen oder bitte um einen Code-Vorschlag …"
+      : "Hinterlege zuerst deinen Gemini API-Schlüssel in den Einstellungen …";
+  }
+  if (chatSendButton) {
+    chatSendButton.disabled = chatIsBusy || !hasKey || !text;
+  }
+  if (chatInputForm) {
+    chatInputForm.classList.toggle("is-disabled", !hasKey);
+    chatInputForm.setAttribute("aria-disabled", String(!hasKey));
+  }
+  updateChatActionStates();
+  refreshChatIntroMessage();
+}
+
+function updateChatActionStates() {
+  if (!chatActionButtons?.length) {
+    return;
+  }
+  const hasKey = hasGeminiApiKey();
+  const hasHistory = chatMessagesState.some((msg) => msg.role === "user" || msg.role === "assistant");
+  chatActionButtons.forEach((button) => {
+    const action = button.dataset.chatAction;
+    if (action === "stop") {
+      button.disabled = !chatIsBusy;
+    } else if (action === "regenerate") {
+      button.disabled = chatIsBusy || !hasKey || !lastUserPrompt || !hasHistory;
+    } else if (action === "clear") {
+      button.disabled = chatIsBusy || !hasHistory;
+    } else {
+      button.disabled = true;
+    }
+  });
+}
+
+function getConversationContents() {
+  return chatMessagesState
+    .filter((msg) => {
+      if (msg.role === "user") {
+        return true;
+      }
+      if (msg.role === "assistant") {
+        return msg.state === "complete";
+      }
+      return false;
+    })
+    .map((msg) => ({
+      role: msg.role === "assistant" ? "model" : "user",
+      parts: [{ text: msg.content }],
+    }));
+}
+
+function stopChatRequest() {
+  if (chatAbortController) {
+    chatAbortController.abort();
+  }
+}
+
+function clearChatConversation() {
+  if (chatIsBusy) {
+    return;
+  }
+  resetChatConversation();
+  if (chatTextarea) {
+    chatTextarea.value = "";
+  }
+  updateChatAvailability();
+  showToast("Chat-Verlauf geleert");
+  setStatus("Chat-Verlauf zurückgesetzt", "info");
+}
+
+async function sendChatPrompt(prompt, { reuseLastUser = false } = {}) {
+  if (!hasGeminiApiKey()) {
+    showToast("Bitte lege einen Gemini-API-Schlüssel in den Einstellungen an.");
+    setStatus("Gemini-Schlüssel fehlt", "warning");
+    updateChatAvailability();
+    return;
+  }
+
+  if (chatIsBusy) {
+    return;
+  }
+
+  lastUserPrompt = prompt;
+
+  if (!reuseLastUser) {
+    appendChatMessage("user", prompt);
+  }
+
+  const contents = getConversationContents();
+  const trimmedContents = contents.slice(-10);
+
+  setChatBusy(true);
+
+  const pendingMessage = appendChatMessage(
+    "assistant",
+    "Gemini formuliert eine Antwort …",
+    "pending"
+  );
+
+  const apiKey = loadGeminiApiKey();
+  const model = getSelectedGeminiModel();
+  const modelPath = model.startsWith("models/") ? model : `models/${model}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${encodeURIComponent(apiKey)}`;
+  const body = {
+    contents: trimmedContents,
+    generationConfig: {
+      temperature: 0.35,
+      topP: 0.95,
+      maxOutputTokens: 1024,
+    },
+  };
+
+  chatAbortController = new AbortController();
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: chatAbortController.signal,
+    });
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const message = payload?.error?.message || `Gemini API Fehler (${response.status})`;
+      throw new Error(message);
+    }
+
+    const candidate = payload?.candidates?.[0];
+    const parts = candidate?.content?.parts || candidate?.parts || [];
+    const text = parts
+      .map((part) => part?.text)
+      .filter(Boolean)
+      .join("\n")
+      .trim();
+
+    if (!text) {
+      throw new Error("Gemini lieferte keine Antwort");
+    }
+
+    updateChatMessage(pendingMessage.id, {
+      content: text,
+      state: "complete",
+    });
+    setStatus("Gemini-Antwort erhalten", "success");
+    showToast("Gemini-Antwort bereit");
+  } catch (error) {
+    if (error.name === "AbortError") {
+      updateChatMessage(pendingMessage.id, {
+        content: "Anfrage abgebrochen.",
+        state: "error",
+      });
+      showToast("Gemini-Anfrage abgebrochen");
+      setStatus("Gemini-Anfrage abgebrochen", "info");
+    } else {
+      console.error("Gemini-Anfrage fehlgeschlagen:", error);
+      updateChatMessage(pendingMessage.id, {
+        content: `Fehler: ${error.message}`,
+        state: "error",
+      });
+      showToast("Gemini konnte keine Antwort liefern");
+      setStatus("Gemini-Fehler", "error");
+    }
+  } finally {
+    chatAbortController = null;
+    setChatBusy(false);
+    updateChatAvailability();
+    if (chatTextarea && !chatTextarea.disabled) {
+      chatTextarea.focus();
+    }
+  }
+}
+
+function regenerateLastResponse() {
+  if (chatIsBusy) {
+    return;
+  }
+  if (!hasGeminiApiKey()) {
+    showToast("Bitte lege einen Gemini-API-Schlüssel in den Einstellungen an.");
+    setStatus("Gemini-Schlüssel fehlt", "warning");
+    return;
+  }
+  if (!lastUserPrompt) {
+    showToast("Keine letzte Anfrage zum Neu-Generieren gefunden.");
+    return;
+  }
+
+  const lastAssistantIndex = (() => {
+    for (let i = chatMessagesState.length - 1; i >= 0; i -= 1) {
+      if (chatMessagesState[i].role === "assistant") {
+        return i;
+      }
+    }
+    return -1;
+  })();
+
+  if (lastAssistantIndex !== -1) {
+    chatMessagesState.splice(lastAssistantIndex, 1);
+  }
+  renderChatMessages();
+  updateChatActionStates();
+  sendChatPrompt(lastUserPrompt, { reuseLastUser: true });
+}
+
+function initializeChatInterface() {
+  if (!chatMessagesContainer || !chatInputForm || !chatTextarea || !chatSendButton) {
+    return;
+  }
+
+  resetChatConversation();
+
+  chatInputForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (chatIsBusy) {
+      return;
+    }
+    const prompt = (chatTextarea.value || "").trim();
+    if (!prompt) {
+      updateChatAvailability();
+      return;
+    }
+    chatTextarea.value = "";
+    updateChatAvailability();
+    sendChatPrompt(prompt);
+  });
+
+  chatTextarea.addEventListener("input", () => {
+    updateChatAvailability();
+  });
+
+  updateChatAvailability();
+}
+
 function updateWorkspaceLayout(config = panelVisibilityConfig) {
   const workspace = document.querySelector(".workspace");
   if (!workspace) {
@@ -1662,6 +2138,8 @@ function initializeSettingsModal() {
       return;
     }
     previouslyFocusedElement = document.activeElement;
+    updateGeminiStatusMessage();
+    populateGeminiModelSelect(cachedGeminiModels, loadGeminiModel());
     settingsModal.classList.add("is-open");
     settingsModal.setAttribute("aria-hidden", "false");
     document.body.classList.add("modal-open");
@@ -1708,29 +2186,157 @@ function initializeSettingsModal() {
   }
 }
 
-function initializeChatActions() {
-  const actionButtons = document.querySelectorAll("[data-chat-action]");
-  if (!actionButtons.length) {
+function initializeGeminiSettings() {
+  updateGeminiStatusMessage();
+  if (!geminiSettingsForm || !geminiKeyInput) {
     return;
   }
 
-  const actionMessages = {
-    stop: "Antworten lassen sich hier bald stoppen.",
-    regenerate: "Neu generieren folgt in Kürze.",
-    clear: "Der Chat-Verlauf wird bald löschbar sein.",
-    attach: "Datei-Anhänge kommen demnächst.",
-  };
+  let revealKey = false;
+  populateGeminiModelSelect(cachedGeminiModels, loadGeminiModel());
+  updateGeminiTestStatus("Keine Verbindung getestet.", "idle");
+  updateChatAvailability();
 
-  actionButtons.forEach((button) => {
+  function setVisibilityState(visible) {
+    revealKey = Boolean(visible);
+    geminiKeyInput.type = revealKey ? "text" : "password";
+    if (geminiToggleButton) {
+      geminiToggleButton.textContent = revealKey ? "Verbergen" : "Anzeigen";
+      geminiToggleButton.setAttribute(
+        "aria-label",
+        revealKey ? "API-Schlüssel verbergen" : "API-Schlüssel anzeigen"
+      );
+    }
+  }
+
+  geminiSettingsForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const value = (geminiKeyInput.value || "").trim();
+    if (!value) {
+      setStatus("Bitte den Gemini-Schlüssel eingeben", "warning");
+      showToast("API-Schlüssel fehlt");
+      geminiKeyInput.focus();
+      return;
+    }
+
+    saveGeminiApiKey(value);
+    geminiSettingsForm.reset();
+    setVisibilityState(false);
+    updateGeminiStatusMessage();
+    populateGeminiModelSelect(cachedGeminiModels, loadGeminiModel());
+    setStatus("Gemini verbunden", "success");
+    showToast("Gemini API-Schlüssel gespeichert");
+    updateChatAvailability();
+  });
+
+  geminiToggleButton?.addEventListener("click", () => {
+    setVisibilityState(!revealKey);
+    if (revealKey) {
+      geminiKeyInput.focus();
+    }
+  });
+
+  geminiClearButton?.addEventListener("click", () => {
+    if (!hasGeminiApiKey()) {
+      showToast("Es ist kein Schlüssel hinterlegt");
+      return;
+    }
+    clearGeminiApiKey();
+    geminiSettingsForm.reset();
+    setVisibilityState(false);
+    updateGeminiStatusMessage();
+    populateGeminiModelSelect(cachedGeminiModels, "");
+    setStatus("Gemini getrennt", "info");
+    showToast("Gemini API-Schlüssel gelöscht");
+    updateGeminiTestStatus("Keine Verbindung getestet.", "idle");
+    updateChatAvailability();
+  });
+
+  geminiTestButton?.addEventListener("click", async () => {
+    const inlineKey = (geminiKeyInput?.value || "").trim();
+    const storedKey = loadGeminiApiKey();
+    const apiKey = inlineKey || storedKey;
+    if (!apiKey) {
+      updateGeminiTestStatus("Bitte zuerst einen Gemini-Schlüssel speichern oder eingeben.", "error");
+      showToast("Gemini-Schlüssel erforderlich");
+      setStatus("Gemini-Schlüssel fehlt", "warning");
+      geminiKeyInput?.focus();
+      return;
+    }
+
+    if (geminiTestButton) {
+      geminiTestButton.disabled = true;
+    }
+    updateGeminiTestStatus("Verbindung wird getestet …", "loading");
+
+    try {
+      const models = await fetchGeminiModels(apiKey);
+      cachedGeminiModels = models.length ? models : GEMINI_DEFAULT_MODELS;
+      populateGeminiModelSelect(cachedGeminiModels, loadGeminiModel());
+      updateGeminiTestStatus(`Verbindung erfolgreich. ${cachedGeminiModels.length} Modelle gefunden.`, "success");
+      setStatus("Gemini-Verbindung OK", "success");
+      showToast("Gemini-Verbindung erfolgreich getestet");
+      updateChatAvailability();
+      if (!storedKey && inlineKey) {
+        showToast("Speichere den Schlüssel, um ihn dauerhaft zu nutzen.");
+      }
+    } catch (error) {
+      console.warn("Gemini Verbindung fehlgeschlagen:", error);
+      updateGeminiTestStatus(`Fehler: ${error.message}`, "error");
+      setStatus("Gemini-Verbindung fehlgeschlagen", "error");
+      showToast("Gemini-Verbindung fehlgeschlagen");
+    } finally {
+      if (geminiTestButton) {
+        geminiTestButton.disabled = false;
+      }
+    }
+  });
+
+  geminiModelSelect?.addEventListener("change", () => {
+    const value = geminiModelSelect.value;
+    saveGeminiModel(value);
+    if (value) {
+      showToast(`Gemini-Modell gesetzt: ${value}`);
+      setStatus("Gemini-Modell gespeichert", "success");
+    } else {
+      showToast("Gemini-Modell zurückgesetzt");
+      setStatus("Gemini-Modell zurückgesetzt", "info");
+    }
+    updateChatAvailability();
+  });
+
+  geminiResetModelsButton?.addEventListener("click", () => {
+    saveGeminiModel("");
+    populateGeminiModelSelect(cachedGeminiModels, "");
+    showToast("Gemini-Modellauswahl zurückgesetzt");
+    setStatus("Gemini-Modell zurückgesetzt", "info");
+  });
+}
+
+function initializeChatActions() {
+  if (!chatActionButtons?.length) {
+    return;
+  }
+
+  chatActionButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const action = button.dataset.chatAction;
-      const message =
-        (action && actionMessages[action]) ||
-        "Diese Chat-Aktion ist bald verfügbar.";
-      showToast(message);
-      setStatus("Chat-Funktionen in Vorbereitung", "info");
+      if (action === "stop") {
+        stopChatRequest();
+        return;
+      }
+      if (action === "regenerate") {
+        regenerateLastResponse();
+        return;
+      }
+      if (action === "clear") {
+        clearChatConversation();
+        return;
+      }
     });
   });
+
+  updateChatActionStates();
 }
 
 function initializeLayoutToggles() {
@@ -1943,6 +2549,20 @@ const saveLocalButton = document.getElementById("save-local-button");
 const localFileInput = document.getElementById("local-file-input");
 const openSettingsButton = document.getElementById("open-settings-button");
 const settingsModal = document.getElementById("settings-modal");
+const geminiSettingsForm = document.getElementById("gemini-settings-form");
+const geminiKeyInput = document.getElementById("gemini-api-key-input");
+const geminiKeyStatus = document.getElementById("gemini-key-status");
+const geminiToggleButton = document.querySelector('[data-gemini-action="toggle"]');
+const geminiClearButton = document.querySelector('[data-gemini-action="clear"]');
+const geminiTestButton = document.querySelector('[data-gemini-action="test"]');
+const geminiResetModelsButton = document.querySelector('[data-gemini-action="reset-models"]');
+const geminiTestStatus = document.getElementById("gemini-test-status");
+const geminiModelSelect = document.getElementById("gemini-model-select");
+const chatMessagesContainer = document.querySelector(".chat-messages");
+const chatInputForm = document.getElementById("chat-form");
+const chatTextarea = document.getElementById("chat-input-textarea");
+const chatSendButton = document.querySelector('[data-chat-send]');
+const chatActionButtons = document.querySelectorAll('.chat-action-button');
 
 const renameFileButton = document.getElementById("rename-file-button");
 const startScreenEl = document.getElementById("start-screen");
@@ -1953,6 +2573,11 @@ const startFolderButton = document.getElementById("start-folder-button");
 const startMetaFolder = document.getElementById("start-meta-folder");
 
 let toastTimeout;
+let chatMessagesState = [];
+let chatIsBusy = false;
+let chatAbortController = null;
+let lastUserPrompt = "";
+let nextChatMessageId = 1;
 let currentTemplate = loadTemplateType();
 const storedProject = loadProjectFiles();
 const projectInitializedFromStorage = !!(storedProject && Object.keys(storedProject).length);
@@ -3240,6 +3865,8 @@ startExampleButton?.addEventListener("click", handleStartExample);
 startBlankButton?.addEventListener("click", handleStartBlank);
 openFolderButton?.addEventListener("click", handleOpenLocalFolder);
 initializeSettingsModal();
+initializeGeminiSettings();
+initializeChatInterface();
 initializeChatActions();
 initializeLayoutToggles();
 

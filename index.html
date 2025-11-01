@@ -256,45 +256,29 @@
         </div>
       </section>
 
-      <aside class="chat-panel" aria-label="Editor Chat (Demnächst)">
+      <aside class="chat-panel" aria-label="Editor Chat">
         <div class="toolbar">
-          <span>AI-Chat (In Vorbereitung)</span>
+          <span>AI-Chat</span>
         </div>
         <div class="chat-content">
           <div class="chat-messages">
             <div class="chat-message chat-message--system">
               <span class="chat-message__title">⚙️ Hinweis</span>
               <p>
-                Hier entsteht ein Chat-Bereich für deinen KI-Assistenten. Bald kannst du direkt aus dem Editor heraus Fragen stellen
-                oder Code-Vorschläge anfordern.
+                Verbinde Google Gemini in den Einstellungen, um hier Fragen zu deinem Projekt zu stellen und Code-Vorschläge zu erhalten.
               </p>
             </div>
-            <div class="chat-message chat-message--placeholder">
-              <p>Bis dahin kannst du den Editor wie gewohnt verwenden und Änderungen live in der Vorschau beobachten.</p>
-            </div>
           </div>
-          <form class="chat-input" action="javascript:void(0);" aria-disabled="true">
-            <textarea placeholder="Chat-Eingabe (demnächst verfügbar)" disabled></textarea>
+          <form id="chat-form" class="chat-input" action="javascript:void(0);">
+            <textarea
+              id="chat-input-textarea"
+              placeholder="Beschreibe dein Anliegen oder bitte um einen Code-Vorschlag …"
+              spellcheck="false"
+              data-chat-input
+            ></textarea>
             <div class="chat-input__footer">
               <div class="chat-input__buttons">
-                <button
-                  type="button"
-                  class="chat-icon-button"
-                  data-chat-action="attach"
-                  aria-label="Datei anhängen"
-                >
-                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path
-                      d="M8.5 12.5l5.3-5.3a3 3 0 0 1 4.24 4.24l-6.36 6.36a4.5 4.5 0 0 1-6.36-6.36l7.07-7.07"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="1.8"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
-                  </svg>
-                </button>
-                <button type="button" class="chat-send-button" disabled>Sendet bald</button>
+                <button type="submit" class="chat-send-button" data-chat-send disabled>Senden</button>
               </div>
               <div class="chat-actions" aria-label="Schnellaktionen">
                 <span class="chat-actions__title">Schnellaktionen</span>
@@ -525,10 +509,83 @@
             >
               <h3 class="settings-section__title">Assistenten</h3>
               <p class="settings-panel__placeholder">
-                Die Integration intelligenter Helfer ist in Vorbereitung. Bald kannst du hier KI-Modelle auswählen,
-                Projektdaten freigeben und automatische Aktionen aktivieren.
+                Verbinde den integrierten Chat mit <strong>Google Gemini</strong>. Dein API-Schlüssel wird ausschließlich lokal im Browser
+                gespeichert und nur für API-Anfragen verwendet.
               </p>
-              <button type="button" class="settings-panel__cta" disabled>Vorab-Benachrichtigung aktivieren</button>
+              <form id="gemini-settings-form" class="settings-form" autocomplete="off">
+                <label class="settings-field" for="gemini-api-key-input">
+                  <span class="settings-field__label">Gemini API-Schlüssel</span>
+                  <div class="settings-field__control">
+                    <input
+                      id="gemini-api-key-input"
+                      name="geminiApiKey"
+                      type="password"
+                      placeholder="AIza..."
+                      autocomplete="off"
+                      spellcheck="false"
+                      data-gemini-field
+                      required
+                    />
+                    <button
+                      type="button"
+                      class="settings-field__toggle"
+                      data-gemini-action="toggle"
+                      aria-label="API-Schlüssel anzeigen"
+                    >
+                      Anzeigen
+                    </button>
+                  </div>
+                  <small class="settings-field__hint">
+                    Du findest den Schlüssel in der
+                    <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio Console</a>.
+                  </small>
+                </label>
+                <div class="settings-form__actions">
+                  <button type="submit" class="settings-modal__confirm">Speichern</button>
+                  <button
+                    type="button"
+                    class="settings-form__link"
+                    data-gemini-action="clear"
+                  >
+                    Schlüssel löschen
+                  </button>
+                </div>
+                <div class="settings-form__actions">
+                  <button
+                    type="button"
+                    class="settings-modal__confirm secondary"
+                    data-gemini-action="test"
+                  >
+                    Verbindung testen
+                  </button>
+                  <span id="gemini-test-status" class="settings-panel__info settings-panel__info--inline" aria-live="polite">
+                    Keine Verbindung getestet.
+                  </span>
+                </div>
+                <label class="settings-field" for="gemini-model-select">
+                  <span class="settings-field__label">Bevorzugtes Modell</span>
+                  <div class="settings-field__control settings-field__control--select">
+                    <select id="gemini-model-select" name="geminiModel" data-gemini-field>
+                      <option value="">Modell auswählen …</option>
+                    </select>
+                  </div>
+                  <small class="settings-field__hint">
+                    Lade verfügbare Modelle über <em>Verbindung testen</em>. Deine Auswahl wird lokal gespeichert.
+                  </small>
+                </label>
+                <div class="settings-form__actions">
+                  <button
+                    type="button"
+                    class="settings-form__link"
+                    data-gemini-action="reset-models"
+                  >
+                    Modellauswahl zurücksetzen
+                  </button>
+                </div>
+              </form>
+              <div id="gemini-key-status" class="settings-panel__info" aria-live="polite">
+                Kein Schlüssel hinterlegt.
+              </div>
             </section>
           </div>
         </div>
