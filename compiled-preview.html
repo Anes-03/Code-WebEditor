@@ -669,40 +669,204 @@ a.button {
 </head>
   <body class="page" data-theme="dark" data-page="home"><script>
 (function() {
-    const send = (level, data) => window.parent.postMessage(
-      { source: "webeditor-preview", level, data },
-      "*"
-    );
+    const MAX_TABLE_ROWS = 30;
 
-    ["log", "info", "warn", "error"].forEach((level) => {
+    const formatValue = (value) => {
+      if (typeof value === "string") {
+        return value;
+      }
+      if (value instanceof Error) {
+        return value.stack || value.message || value.name;
+      }
+      if (typeof value === "object" && value !== null) {
+        try {
+          return JSON.stringify(value, null, 2);
+        } catch (error) {
+          if (typeof value.toString === "function") {
+            return value.toString();
+          }
+          return Object.prototype.toString.call(value);
+        }
+      }
+      return String(value);
+    };
+
+    const buildTable = (input, columns) => {
+      if (!input || typeof input !== "object") {
+        return null;
+      }
+
+      const entries = Array.isArray(input)
+        ? input.map((item, index) => [index, item])
+        : Object.entries(input);
+
+      if (!entries.length) {
+        return { headers: ["(index)"], rows: [], truncated: false, total: 0 };
+      }
+
+      const limit = Math.min(entries.length, MAX_TABLE_ROWS);
+      const headersSet = new Set(["(index)"]);
+      const rows = [];
+
+      for (let i = 0; i < limit; i += 1) {
+        const [key, value] = entries[i];
+        const row = { "(index)": key };
+        if (value && typeof value === "object") {
+          const props = Array.isArray(columns) && columns.length
+            ? columns
+            : Object.keys(value);
+          props.forEach((prop) => {
+            headersSet.add(prop);
+            row[prop] = formatValue(value[prop]);
+          });
+        } else {
+          headersSet.add("value");
+          row.value = formatValue(value);
+        }
+        rows.push(row);
+      }
+
+      const headers = Array.from(headersSet);
+      const normalizedRows = rows.map((row) =>
+        headers.map((header) => (row[header] === undefined ? "" : row[header]))
+      );
+
+      return {
+        headers,
+        rows: normalizedRows,
+        truncated: entries.length > limit,
+        total: entries.length,
+      };
+    };
+
+    const post = (payload) =>
+      window.parent.postMessage(
+        Object.assign({ source: "webeditor-preview" }, payload),
+        "*"
+      );
+
+    const sendEntry = (level, message, extras) => {
+      post(
+        Object.assign(
+          { type: "console", level, message },
+          extras || {}
+        )
+      );
+    };
+
+    ["log", "info", "warn", "error", "debug"].forEach((level) => {
       const original = console[level];
       console[level] = function () {
         const args = Array.prototype.slice.call(arguments);
-        const formatted = args
-          .map(function (item) {
-            if (typeof item === "object" && item !== null) {
-              try {
-                return JSON.stringify(item, null, 2);
-              } catch (error) {
-                return String(item);
-              }
-            }
-            return String(item);
-          })
-          .join(" ");
-        send(level, formatted);
+        const formattedArgs = args.map(formatValue);
+        const message = formattedArgs.join(" ");
+        sendEntry(level, message, { args: formattedArgs });
         if (original) {
-          original.apply(console, args);
+          return original.apply(console, args);
         }
+        return undefined;
       };
     });
 
+    const originalTrace = console.trace;
+    console.trace = function () {
+      const args = Array.prototype.slice.call(arguments);
+      const formattedArgs = args.map(formatValue);
+      const message = formattedArgs.length ? formattedArgs.join(" ") : "Trace";
+      const stack = new Error().stack || "";
+      sendEntry("trace", message, { args: formattedArgs, stack });
+      if (originalTrace) {
+        return originalTrace.apply(console, args);
+      }
+      return undefined;
+    };
+
+    const originalTable = console.table;
+    console.table = function () {
+      const args = Array.prototype.slice.call(arguments);
+      const table = buildTable(args[0], args[1]);
+      const formattedArgs = args.map(formatValue);
+      const message = table ? "Table" : formattedArgs.join(" ");
+      sendEntry("table", message, { args: formattedArgs, table });
+      if (originalTable) {
+        return originalTable.apply(console, args);
+      }
+      return undefined;
+    };
+
+    const originalClear = console.clear;
+    console.clear = function () {
+      post({ type: "console", action: "clear" });
+      if (originalClear) {
+        return originalClear.apply(console, arguments);
+      }
+      return undefined;
+    };
+
     window.addEventListener("error", function (event) {
-      send(
+      const stack =
+        event.error && event.error.stack
+          ? event.error.stack
+          : event.filename + ":" + event.lineno + ":" + event.colno;
+      sendEntry(
         "error",
-        event.message + " (" + event.filename + ":" + event.lineno + ")"
+        event.message + " (" + event.filename + ":" + event.lineno + ")",
+        { stack }
       );
     });
+
+    window.addEventListener("unhandledrejection", function (event) {
+      const reason = event.reason;
+      const message = reason
+        ? "Unhandled promise rejection: " + formatValue(reason)
+        : "Unhandled promise rejection";
+      const stack =
+        reason && typeof reason === "object" && reason.stack
+          ? reason.stack
+          : "";
+      sendEntry("error", message, { stack });
+    });
+
+    const normalizeNavigationTarget = (href) => {
+      if (!href) {
+        return "";
+      }
+
+      let target = href.trim();
+      if (!target) {
+        return "";
+      }
+
+      if (target.startsWith("http://") || target.startsWith("https://")) {
+        const start = target.indexOf("//") + 2;
+        const pathIndex = target.indexOf("/", start);
+        target = pathIndex === -1 ? "" : target.slice(pathIndex);
+      }
+
+      while (target.startsWith("./")) {
+        target = target.slice(2);
+      }
+
+      while (target.startsWith("../")) {
+        target = target.slice(3);
+      }
+
+      while (target.startsWith("/")) {
+        target = target.slice(1);
+      }
+
+      const queryIndex = target.indexOf("?");
+      const hashIndex = target.indexOf("#");
+      const cutIndex = [queryIndex, hashIndex]
+        .filter((index) => index !== -1)
+        .reduce((min, index) => (min === -1 || index < min ? index : min), -1);
+
+      if (cutIndex !== -1) {
+        target = target.slice(0, cutIndex);
+      }
+
+      return target;
+    };
 
     document.addEventListener(
       "click",
@@ -720,11 +884,10 @@ a.button {
         }
         if (/.html($|[?#])/i.test(href)) {
           event.preventDefault();
-          const normalized = href.replace(/^.//, "");
-          window.parent.postMessage(
-            { source: "webeditor-preview", action: "navigate", file: normalized },
-            "*"
-          );
+          const normalized = normalizeNavigationTarget(href);
+          if (normalized) {
+            post({ action: "navigate", file: normalized });
+          }
         }
       },
       true
@@ -989,7 +1152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!href) return;
     if (/.html($|[?#])/i.test(href)) {
       event.preventDefault();
-      const normalized = href.replace(/^.//, '');
+      const normalized = href.startsWith('./') ? href.slice(2) : href;
       window.parent.postMessage(
         { source: 'webeditor-preview', action: 'navigate', file: normalized },
         '*'
