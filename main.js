@@ -3831,6 +3831,21 @@ ${jsBlocks.join("\n\n")}
 ${consoleBridgeSource}
 </scr` + `ipt>`;
 
+  const injectConsoleBridge = (html) => {
+    const content = typeof html === "string" ? html : "";
+    if (/<script\b[^>]*>/i.test(content)) {
+      return content.replace(/<script\b[^>]*>/i, (match) => `${consoleScriptTag}
+${match}`);
+    }
+    if (/<body([^>]*)>/i.test(content)) {
+      return content.replace(/<body([^>]*)>/i, (match, attrs) => `<body${attrs}>${consoleScriptTag}`);
+    }
+    if (/<head([^>]*)>/i.test(content)) {
+      return content.replace(/<head([^>]*)>/i, (match, attrs) => `<head${attrs}>${consoleScriptTag}`);
+    }
+    return `${consoleScriptTag}${content}`;
+  };
+
   if (!targetFile) {
     const message = activeFile
       ? `Für die Datei <code>${activeFile}</code> steht keine HTML-Vorschau zur Verfügung.`
@@ -3844,7 +3859,7 @@ ${consoleBridgeSource}
       .preview-placeholder code { background: rgba(148, 163, 184, 0.18); border-radius: 6px; padding: 0.2rem 0.4rem; }
     </style>`;
 
-    return `<!DOCTYPE html>
+    const placeholderDoc = `<!DOCTYPE html>
 <html lang="de">
   <head>
     <meta charset="utf-8" />
@@ -3853,7 +3868,6 @@ ${consoleBridgeSource}
     ${placeholderStyles}
   </head>
   <body>
-    ${consoleScriptTag}
     <main class="preview-placeholder">
       <h2>Keine HTML-Vorschau</h2>
       <p>${message}</p>
@@ -3862,6 +3876,8 @@ ${consoleBridgeSource}
     ${scriptsMarkup}
   </body>
 </html>`;
+
+    return injectConsoleBridge(placeholderDoc);
   }
 
   const baseHTMLSource = projectFiles[targetFile];
@@ -3869,7 +3885,7 @@ ${consoleBridgeSource}
   const baseHTML = baseHTMLSource !== undefined ? baseHTMLSource : fallbackHTML;
 
   if (!/<body[\s>]/i.test(baseHTML)) {
-    return `<!DOCTYPE html>
+    let docWithoutBody = `<!DOCTYPE html>
 <html lang="de">
   <head>
     <meta charset="utf-8" />
@@ -3877,11 +3893,12 @@ ${consoleBridgeSource}
     ${stylesMarkup}
   </head>
   <body>
-    ${consoleScriptTag}
     ${baseHTML}
     ${scriptsMarkup}
   </body>
 </html>`;
+    docWithoutBody = injectConsoleBridge(docWithoutBody);
+    return docWithoutBody;
   }
 
   let output = baseHTML;
@@ -3901,9 +3918,7 @@ ${consoleBridgeSource}
     }
   }
 
-  output = output.replace(/<body([^>]*)>/i, function (match, attrs) {
-    return `<body${attrs}>${consoleScriptTag}`;
-  });
+  output = injectConsoleBridge(output);
 
   if (scriptsMarkup) {
     if (/<\/body>/i.test(output)) {
