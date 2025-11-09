@@ -2184,6 +2184,7 @@ function initializeSettingsModal() {
     const active = Array.from(tabButtons).find((button) => button.classList.contains("is-active"));
     activateTab(active?.dataset.settingsTab || tabButtons[0].dataset.settingsTab);
   }
+
 }
 
 function initializeGeminiSettings() {
