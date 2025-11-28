@@ -124,7 +124,7 @@ body {
   height: 22px;
 }
 
-.brand > div {
+.brand>div {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
@@ -703,20 +703,14 @@ body.modal-open {
 
 .workspace {
   display: grid;
-  grid-template-columns: var(
-    --workspace-columns,
-    minmax(220px, 260px) minmax(0, 1.1fr)
-      minmax(320px, 0.95fr) minmax(260px, 0.85fr)
-  );
-  grid-template-rows: var(
-    --workspace-rows,
-    minmax(0, 1fr) minmax(220px, 0.65fr)
-  );
-  grid-template-areas: var(
-    --workspace-areas,
-    "file-sidebar editor-panel preview-panel chat-panel"
-    "file-sidebar editor-panel console-panel chat-panel"
-  );
+  grid-template-columns: var(--workspace-columns,
+      minmax(220px, 260px) minmax(0, 1.1fr) minmax(320px, 0.95fr) minmax(260px, 0.85fr));
+  grid-template-rows: var(--workspace-rows,
+      minmax(0, 1fr) minmax(220px, 0.65fr));
+  grid-template-areas: var(--workspace-areas,
+      "file-sidebar editor-panel preview-panel chat-panel"
+      "file-sidebar editor-panel console-panel chat-panel"
+    );
   gap: 1.25rem;
   padding: 1.25rem 2rem 2rem;
   flex: 1;
@@ -934,6 +928,11 @@ body.modal-open {
 .chat-panel {
   grid-area: chat-panel;
   min-width: 260px;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
+  align-self: stretch;
+  overscroll-behavior: contain;
 }
 
 .toolbar {
@@ -1265,6 +1264,11 @@ body.start-screen-open {
   gap: 1rem;
   padding: 1.2rem 1.4rem 1.6rem;
   flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  height: 100%;
+  overscroll-behavior: contain;
 }
 
 .chat-actions {
@@ -1334,9 +1338,13 @@ body.start-screen-open {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
+  min-height: 0;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 .chat-message {

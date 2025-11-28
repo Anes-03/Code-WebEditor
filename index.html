@@ -189,6 +189,31 @@
               </svg>
             </button>
             <button
+              id="delete-file-button"
+              class="ghost"
+              aria-label="Datei löschen"
+              title="Datei löschen"
+              type="button"
+            >
+              <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                <path
+                  d="M6 6l12 12M6 18L18 6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M9 3h6M5 6h14M8 6v12a2 2 0 002 2h4a2 2 0 002-2V6"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.6"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <button
               id="new-file-button"
               class="ghost"
               aria-label="Neue Datei"
@@ -261,7 +286,7 @@
           <span>AI-Chat</span>
         </div>
         <div class="chat-content">
-          <div class="chat-messages">
+          <div class="chat-messages" tabindex="0" role="log" aria-live="polite">
             <div class="chat-message chat-message--system">
               <span class="chat-message__title">⚙️ Hinweis</span>
               <p>

@@ -42,1388 +42,169 @@ const DEFAULT_SNIPPETS = {
 const EXAMPLE_PROJECT = {
   "index.html": `<!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <title>Brightside Studio</title>
-  </head>
-  <body class="page" data-theme="dark" data-page="home">
-    <header class="hero" id="top">
-      <nav class="hero__nav">
-        <span class="hero__logo">Brightside</span>
-        <ul class="hero__links">
-          <li><a data-nav="home" href="index.html">Start</a></li>
-          <li><a data-nav="services" href="services.html">Leistungen</a></li>
-          <li><a data-nav="cases" href="cases.html">Cases</a></li>
-          <li><a data-nav="team" href="team.html">Team</a></li>
-        </ul>
-        <div class="hero__actions">
-          <button class="button button--ghost" data-theme-toggle type="button">
-            Modus wechseln
-          </button>
-          <button class="button button--primary" data-open-brief type="button">
-            Projekt starten
-          </button>
+<head>
+  <meta charset="utf-8"/>
+  <title>Dashboard Analytics</title>
+</head>
+<body data-theme="dark">
+  <div class="app">
+    <nav class="sidenav">
+      <h1>📊 Dashboard</h1>
+      <a href="#" class="nav-link active">Übersicht</a>
+      <a href="#" class="nav-link">Analytics</a>
+      <a href="#" class="nav-link">Benutzer</a>
+      <button class="theme-btn" data-theme-toggle>🌙 Dark Mode</button>
+    </nav>
+    
+    <main class="content">
+      <header>
+        <h2>Dashboard Übersicht</h2>
+        <select data-period>
+          <option>Letzte 7 Tage</option>
+          <option>Letzte 30 Tage</option>
+        </select>
+      </header>
+
+      <div class="stats">
+        <div class="card">
+          <span class="label">Benutzer</span>
+          <div class="value" data-counter="4250">0</div>
+          <span class="change positive">↑ 12.5%</span>
         </div>
-      </nav>
-      <div class="hero__content">
-        <div class="hero__copy">
-          <span class="hero__eyebrow">Design · Strategie · Tech</span>
-          <h1>Digitale Produkte, die Menschen lieben</h1>
-          <p>
-            Wir kombinieren Design Sprints mit präziser Umsetzung und helfen Marken dabei,
-            Ideen schneller in erstklassige Erlebnisse zu verwandeln.
-          </p>
-          <div class="hero__buttons">
-            <button class="button button--primary" data-open-brief type="button">
-              Kostenloses Briefing anfragen
-            </button>
-            <button class="button button--ghost" data-theme-toggle type="button">
-              Theme umschalten
-            </button>
-          </div>
-          <dl class="hero__stats">
-            <div>
-              <dt>Launches</dt>
-              <dd data-count-to="48">0</dd>
-            </div>
-            <div>
-              <dt>zufriedene Kunden</dt>
-              <dd data-count-to="92">0</dd>
-            </div>
-            <div>
-              <dt>Teamgröße</dt>
-              <dd data-count-to="24">0</dd>
-            </div>
-          </dl>
+        <div class="card">
+          <span class="label">Umsatz</span>
+          <div class="value" data-counter="28400" data-prefix="€">€0</div>
+          <span class="change positive">↑ 8.2%</span>
         </div>
-        <div class="hero__visual">
-          <div class="orbit">
-            <span>Brand Sprint</span>
-            <span>UX Audit</span>
-            <span>Growth Loop</span>
-            <span>MVP Launch</span>
-          </div>
+        <div class="card">
+          <span class="label">Konversionen</span>
+          <div class="value" data-counter="847">0</div>
+          <span class="change negative">↓ 3.1%</span>
+        </div>
+        <div class="card">
+          <span class="label">Avg. Session</span>
+          <div class="value" data-counter="5" data-suffix="m">0m</div>
+          <span class="change positive">↑ 5.4%</span>
         </div>
       </div>
-    </header>
-    <section id="services" class="section services">
-      <div class="section__header">
-        <span class="section__eyebrow">Leistungen</span>
-        <h2>Mit welchem Baustein starten wir?</h2>
-        <p>Modulare Pakete, die sich nahtlos zu deinem Produktplan zusammensetzen lassen.</p>
+
+      <div class="chart-card">
+        <h3>Benutzeraktivität</h3>
+        <canvas id="chart" width="700" height="200"></canvas>
       </div>
-      <div class="services__grid">
-        <article class="service-card">
-          <h3>Product Discovery</h3>
-          <p>Hypothesen validieren, Roadmaps schärfen und den Fokus auf echte Nutzerbedürfnisse legen.</p>
-          <ul>
-            <li>Research Sprints</li>
-            <li>Journey Mapping</li>
-            <li>Opportunity Sizing</li>
-          </ul>
-        </article>
-        <article class="service-card">
-          <h3>Experience Design</h3>
-          <p>Vom UX-Flow bis zum finalen UI-System: alles aus einer Hand, iterativ und testbasiert.</p>
-          <ul>
-            <li>Prototyping</li>
-            <li>Design Systems</li>
-            <li>Accessibility Audits</li>
-          </ul>
-        </article>
-        <article class="service-card">
-          <h3>Launch & Growth</h3>
-          <p>Wir liefern stabile MVPs, messen Erfolg und bauen datengetriebene Wachstums-Loops.</p>
-          <ul>
-            <li>Tech Enablement</li>
-            <li>Performance Tracking</li>
-            <li>Growth Experiments</li>
-          </ul>
-        </article>
-      </div>
-    </section>
-    <section id="cases" class="section cases">
-      <div class="section__header">
-        <span class="section__eyebrow">Cases</span>
-        <h2>Ein Blick in aktuelle Projekte</h2>
-        <div class="cases__filters">
-          <button class="chip is-active" data-filter="all" type="button">Alle</button>
-          <button class="chip" data-filter="brand" type="button">Brand</button>
-          <button class="chip" data-filter="product" type="button">Product</button>
-          <button class="chip" data-filter="growth" type="button">Growth</button>
+
+      <div class="activity">
+        <h3>Letzte Aktivitäten</h3>
+        <div class="activity-item">
+          <span>🎉</span>
+          <div><strong>Neue Registrierung</strong><small>vor 2 Min</small></div>
+        </div>
+        <div class="activity-item">
+          <span>💳</span>
+          <div><strong>Zahlung: €299</strong><small>vor 15 Min</small></div>
+        </div>
+        <div class="activity-item">
+          <span>📧</span>
+          <div><strong>E-Mail Kampagne gesendet</strong><small>vor 1 Std</small></div>
         </div>
       </div>
-      <div class="cases__grid">
-        <article class="work-card" data-case="brand">
-          <span class="work-card__tag">Brand Refresh</span>
-          <h3>Northern Lights</h3>
-          <p>Neue Markenwelt für einen nachhaltigen Energy-Drink inkl. multisensorischer Kampagne.</p>
-        </article>
-        <article class="work-card" data-case="product">
-          <span class="work-card__tag">App Experience</span>
-          <h3>Wave Mobility</h3>
-          <p>E-Scooter Plattform mit proaktiven Routen-Empfehlungen und Loyalty-Layer.</p>
-        </article>
-        <article class="work-card" data-case="growth">
-          <span class="work-card__tag">Growth Loop</span>
-          <h3>Fresco Delivery</h3>
-          <p>Experiment-getriebene Kampagnen, die den CAC in acht Wochen halbierten.</p>
-        </article>
-        <article class="work-card" data-case="product">
-          <span class="work-card__tag">SaaS Dashboard</span>
-          <h3>Pulse Finance</h3>
-          <p>Datenvisualisierung mit modularer Architektur und Dark-Mode-by-default.</p>
-        </article>
-      </div>
-    </section>
-    <section id="team" class="section highlight">
-      <div class="highlight__media"></div>
-      <div class="highlight__content">
-        <span class="section__eyebrow">Team</span>
-        <h2>Strategen, Designer und Engineers unter einem Dach</h2>
-        <p>
-          Wir arbeiten in integrierten Crews und bringen Branding, Experience Design und Entwicklung an einen Tisch.
-          Jedes Projekt erhält ein dediziertes Kernteam mit direkten Entscheidungswegen.
-        </p>
-        <ul class="highlight__list">
-          <li>30+ zertifizierte Design-Sprint-Facilitators</li>
-          <li>Eigene Research-Community mit 2.000 Testpersonen</li>
-          <li>Engineering-Gilde für Frontend, Backend und QA</li>
-        </ul>
-      </div>
-    </section>
-    <section class="section testimonials">
-      <div class="section__header">
-        <span class="section__eyebrow">Feedback</span>
-        <h2>Was unsere Partner sagen</h2>
-      </div>
-      <div class="testimonials__grid">
-        <figure>
-          <blockquote>„Die Geschwindigkeit und Qualität sind außergewöhnlich. Unser MVP ging in 10 Wochen live.“</blockquote>
-          <figcaption>— Sofia Kramer, CPO bei Wave Mobility</figcaption>
-        </figure>
-        <figure>
-          <blockquote>„Brightside hat unser verteiltes Team hinter einer klaren Produktvision vereint.“</blockquote>
-          <figcaption>— Rahul Singh, Gründer von Pulse Finance</figcaption>
-        </figure>
-      </div>
-    </section>
-    <section class="section newsletter">
-      <div class="newsletter__card">
-        <div>
-          <span class="section__eyebrow">Insights</span>
-          <h2>Neues aus dem Studio</h2>
-          <p>Einmal im Monat: Taktiken, Templates und Growth-Experimente direkt in dein Postfach.</p>
-        </div>
-        <form class="newsletter__form">
-          <label>
-            <span class="visually-hidden">E-Mail-Adresse</span>
-            <input type="email" name="email" placeholder="hallo@unternehmen.de" required />
-          </label>
-          <button class="button button--primary" type="submit">Abonnieren</button>
-        </form>
-      </div>
-    </section>
-    <footer class="site-footer">
-      <p>&copy; <span data-year></span> Brightside Studio · Gemeinsam in 6 Wochen von der Idee zum Launch.</p>
-    </footer>
-    <aside id="brief" class="brief-panel" data-brief-panel aria-hidden="true">
-      <div class="brief-panel__card">
-        <button class="brief-panel__close" data-brief-close type="button" aria-label="Dialog schließen">×</button>
-        <h3>Projekt-Quickbrief</h3>
-        <p>Erzähl uns in drei Fragen, worum es geht. Wir melden uns innerhalb eines Tages.</p>
-        <form class="brief-form" data-brief-form>
-          <label>
-            Projektname
-            <input name="project" required />
-          </label>
-          <label>
-            Ziel
-            <select name="goal" required>
-              <option value="">Bitte wählen</option>
-              <option>Produktidee validieren</option>
-              <option>Produkt skalieren</option>
-              <option>Brand erneuern</option>
-              <option>Team erweitern</option>
-            </select>
-          </label>
-          <label>
-            Budget-Rahmen
-            <div class="brief-form__choices">
-              <label><input type="radio" name="budget" value="25k" required /> 25.000 €</label>
-              <label><input type="radio" name="budget" value="50k" /> 50.000 €</label>
-              <label><input type="radio" name="budget" value="custom" /> individuelles Angebot</label>
-            </div>
-          </label>
-          <button class="button button--primary" type="submit">Briefing senden</button>
-        </form>
-      </div>
-    </aside>
-    <div class="brief-backdrop" data-brief-backdrop aria-hidden="true"></div>
-  </body>
-</html>
-`,
-  "services.html": `<!DOCTYPE html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <title>Brightside Studio · Leistungen</title>
-  </head>
-  <body class="page" data-theme="dark" data-page="services">
-    <header class="hero hero--subpage">
-      <nav class="hero__nav">
-        <span class="hero__logo">Brightside</span>
-        <ul class="hero__links">
-          <li><a data-nav="home" href="index.html">Start</a></li>
-          <li><a data-nav="services" href="services.html">Leistungen</a></li>
-          <li><a data-nav="cases" href="cases.html">Cases</a></li>
-          <li><a data-nav="team" href="team.html">Team</a></li>
-        </ul>
-        <div class="hero__actions">
-          <button class="button button--ghost" data-theme-toggle type="button">
-            Modus wechseln
-          </button>
-          <button class="button button--primary" data-open-brief type="button">
-            Projekt starten
-          </button>
-        </div>
-      </nav>
-      <div class="hero__content subpage-intro">
-        <div class="hero__copy">
-          <span class="hero__eyebrow">Service Pakete</span>
-          <h1>Von der Idee zum skalierbaren Produkt</h1>
-          <p>
-            Wähle aus kuratierten Modulen oder kombiniere sie zu einem individuellen Projektfahrplan.
-          </p>
-        </div>
-      </div>
-    </header>
-    <main class="subpage-main">
-      <section class="section services services--detail">
-        <div class="section__header">
-          <span class="section__eyebrow">Packages</span>
-          <h2>Drei Wege zum Produktstart</h2>
-        </div>
-        <div class="services__grid">
-          <article class="service-card service-card--highlight">
-            <h3>Discovery Sprint</h3>
-            <p>In zehn Tagen zu validierten Hypothesen, klickbarem Prototyp und klarer Roadmap.</p>
-            <ul>
-              <li>Research & Opportunity Mapping</li>
-              <li>Prototyping & Remote Testing</li>
-              <li>Priorisierte Produktstrategie</li>
-            </ul>
-            <footer>ab 18.000 € · 2 Wochen</footer>
-          </article>
-          <article class="service-card">
-            <h3>Experience Lab</h3>
-            <p>Vertiefte UX/UI-Ausarbeitung inkl. Design System und Übergabe an Engineering.</p>
-            <ul>
-              <li>UX-Flows & Content Strategy</li>
-              <li>Visual Language & Design Tokens</li>
-              <li>Accessibility Review</li>
-            </ul>
-            <footer>ab 32.000 € · 4 Wochen</footer>
-          </article>
-          <article class="service-card">
-            <h3>Launch Companion</h3>
-            <p>Implementierung, QA und Growth-Basis für Beta-Launch & Live-Gang.</p>
-            <ul>
-              <li>Frontend & Backend Enablement</li>
-              <li>Experiment-Setup & Tracking</li>
-              <li>Lifecycle Automations</li>
-            </ul>
-            <footer>ab 45.000 € · 6 Wochen</footer>
-          </article>
-        </div>
-      </section>
-      <section class="section process">
-        <div class="section__header">
-          <span class="section__eyebrow">Arbeitsweise</span>
-          <h2>Schlanke Schritte, klare Verantwortlichkeiten</h2>
-        </div>
-        <ol class="process__steps">
-          <li>
-            <h3>1 · Alignment</h3>
-            <p>Kick-off Workshop, Zieldefinition und Setup gemeinsamer Workspaces.</p>
-          </li>
-          <li>
-            <h3>2 · Build</h3>
-            <p>Interdisziplinäre Crews arbeiten in 2-Wochen-Zyklen mit wöchentlichen Reviews.</p>
-          </li>
-          <li>
-            <h3>3 · Launch</h3>
-            <p>QA, Beta-Release, KPI-Tracking und Übergabe an Growth-Team / Produktorganisation.</p>
-          </li>
-        </ol>
-      </section>
-      <section class="section cta">
-        <div class="cta__card">
-          <div>
-            <h2>Starte mit einem kostenlosen Discovery Call</h2>
-            <p>Wir zeigen dir ähnliche Projekte, Tools und greifen deine KPI-Challenges auf.</p>
-          </div>
-          <button class="button button--primary" data-open-brief type="button">Termin vereinbaren</button>
-        </div>
-      </section>
     </main>
-    <footer class="site-footer">
-      <p>&copy; <span data-year></span> Brightside Studio</p>
-    </footer>
-    <aside class="brief-panel" data-brief-panel aria-hidden="true">
-      <div class="brief-panel__card">
-        <button class="brief-panel__close" data-brief-close type="button" aria-label="Dialog schließen">×</button>
-        <h3>Projekt-Quickbrief</h3>
-        <form class="brief-form" data-brief-form>
-          <label>Projektname<input name="project" required /></label>
-          <label>Ziel<select name="goal" required><option value="">Bitte wählen</option><option>Produktidee validieren</option><option>Produkt skalieren</option><option>Brand erneuern</option><option>Team erweitern</option></select></label>
-          <div class="brief-form__choices">
-            <label><input type="radio" name="budget" value="25k" required /> 25.000 €</label>
-            <label><input type="radio" name="budget" value="50k" /> 50.000 €</label>
-            <label><input type="radio" name="budget" value="custom" /> individuelles Angebot</label>
-          </div>
-          <button class="button button--primary" type="submit">Briefing senden</button>
-        </form>
-      </div>
-    </aside>
-    <div class="brief-backdrop" data-brief-backdrop aria-hidden="true"></div>
-  </body>
-</html>
-`,
-  "cases.html": `<!DOCTYPE html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <title>Brightside Studio · Cases</title>
-  </head>
-  <body class="page" data-theme="dark" data-page="cases">
-    <header class="hero hero--subpage">
-      <nav class="hero__nav">
-        <span class="hero__logo">Brightside</span>
-        <ul class="hero__links">
-          <li><a data-nav="home" href="index.html">Start</a></li>
-          <li><a data-nav="services" href="services.html">Leistungen</a></li>
-          <li><a data-nav="cases" href="cases.html">Cases</a></li>
-          <li><a data-nav="team" href="team.html">Team</a></li>
-        </ul>
-        <div class="hero__actions">
-          <button class="button button--ghost" data-theme-toggle type="button">
-            Modus wechseln
-          </button>
-          <button class="button button--primary" data-open-brief type="button">
-            Projekt starten
-          </button>
-        </div>
-      </nav>
-      <div class="hero__content subpage-intro">
-        <div class="hero__copy">
-          <span class="hero__eyebrow">Case Library</span>
-          <h1>Wachstum, das wir gemeinsam geschaffen haben</h1>
-          <p>Eine Auswahl an Projekten aus den Bereichen Branding, Product und Growth.</p>
-        </div>
-      </div>
-    </header>
-    <main class="subpage-main">
-      <section class="section cases">
-        <div class="case-gallery">
-          <article class="case-tile case-tile--brand">
-            <header>Cosmic Roastery</header>
-            <p>End-to-End Rebranding & Packaging Experience mit AR-basiertem Produktlaunch.</p>
-          </article>
-          <article class="case-tile case-tile--product">
-            <header>Mint Health</header>
-            <p>Telemedizin-Plattform mit personalisierter Therapieplanung und Care-Coach.</p>
-          </article>
-          <article class="case-tile case-tile--growth">
-            <header>Sunny Solar</header>
-            <p>Growth Engine & Referral-Programm, das die Abschlussquote verdoppelt hat.</p>
-          </article>
-          <article class="case-tile case-tile--product">
-            <header>Atlas Freight</header>
-            <p>Logistik-Dashboard für Flottenanalysen mit Simulationen in Echtzeit.</p>
-          </article>
-        </div>
-      </section>
-      <section class="section metrics">
-        <div class="section__header">
-          <span class="section__eyebrow">Impact</span>
-          <h2>Messbare Ergebnisse</h2>
-        </div>
-        <dl class="metrics__grid">
-          <div>
-            <dt>+218%</dt>
-            <dd>höhere Aktivierungsrate nach UX-Redesign</dd>
-          </div>
-          <div>
-            <dt>8 Wochen</dt>
-            <dd>Durchschnittliche Zeit bis zum MVP Launch</dd>
-          </div>
-          <div>
-            <dt>3,8x</dt>
-            <dd>Return on Design Invest für Growth-Programme</dd>
-          </div>
-        </dl>
-      </section>
-      <section class="section timeline">
-        <div class="section__header">
-          <span class="section__eyebrow">Ablauf</span>
-          <h2>So läuft ein Projekt mit uns ab</h2>
-        </div>
-        <div class="timeline__grid">
-          <article>
-            <h3>Kick-off & Value Mapping</h3>
-            <p>In 48 Stunden identifizieren wir Chancenfelder und definieren Kern-KPIs.</p>
-          </article>
-          <article>
-            <h3>Build Sprints</h3>
-            <p>Cross-funktionale Squads arbeiten fokussiert in zweiwöchigen Iterationen.</p>
-          </article>
-          <article>
-            <h3>Launch & Growth</h3>
-            <p>Rollout mit QA, Tracking-Setup und datengetriebenen Experiments.</p>
-          </article>
-        </div>
-      </section>
-    </main>
-    <footer class="site-footer">
-      <p>&copy; <span data-year></span> Brightside Studio</p>
-    </footer>
-    <aside class="brief-panel" data-brief-panel aria-hidden="true">
-      <div class="brief-panel__card">
-        <button class="brief-panel__close" data-brief-close type="button" aria-label="Dialog schließen">×</button>
-        <h3>Projekt-Quickbrief</h3>
-        <form class="brief-form" data-brief-form>
-          <label>Projektname<input name="project" required /></label>
-          <label>Ziel<select name="goal" required><option value="">Bitte wählen</option><option>Produktidee validieren</option><option>Produkt skalieren</option><option>Brand erneuern</option><option>Team erweitern</option></select></label>
-          <div class="brief-form__choices">
-            <label><input type="radio" name="budget" value="25k" required /> 25.000 €</label>
-            <label><input type="radio" name="budget" value="50k" /> 50.000 €</label>
-            <label><input type="radio" name="budget" value="custom" /> individuelles Angebot</label>
-          </div>
-          <button class="button button--primary" type="submit">Briefing senden</button>
-        </form>
-      </div>
-    </aside>
-    <div class="brief-backdrop" data-brief-backdrop aria-hidden="true"></div>
-  </body>
-</html>
-`,
-  "team.html": `<!DOCTYPE html>
-<html lang="de">
-  <head>
-    <meta charset="utf-8" />
-    <title>Brightside Studio · Team</title>
-  </head>
-  <body class="page" data-theme="dark" data-page="team">
-    <header class="hero hero--subpage">
-      <nav class="hero__nav">
-        <span class="hero__logo">Brightside</span>
-        <ul class="hero__links">
-          <li><a data-nav="home" href="index.html">Start</a></li>
-          <li><a data-nav="services" href="services.html">Leistungen</a></li>
-          <li><a data-nav="cases" href="cases.html">Cases</a></li>
-          <li><a data-nav="team" href="team.html">Team</a></li>
-        </ul>
-        <div class="hero__actions">
-          <button class="button button--ghost" data-theme-toggle type="button">
-            Modus wechseln
-          </button>
-          <button class="button button--primary" data-open-brief type="button">
-            Projekt starten
-          </button>
-        </div>
-      </nav>
-      <div class="hero__content subpage-intro">
-        <div class="hero__copy">
-          <span class="hero__eyebrow">People & Culture</span>
-          <h1>Ein Team aus hybriden Talenten</h1>
-          <p>Strategen, Researchers, Designer und Engineers arbeiten in flexiblen Crews zusammen.</p>
-        </div>
-      </div>
-    </header>
-    <main class="subpage-main">
-      <section class="section team">
-        <div class="section__header">
-          <span class="section__eyebrow">Teamstruktur</span>
-          <h2>Kleine Squads mit großer Wirkung</h2>
-        </div>
-        <div class="team-grid">
-          <article class="team-member">
-            <h3>Strategy Crew</h3>
-            <p>Research, KPIs, Positionierung und Opportunity Mapping.</p>
-            <ul>
-              <li>Product Strategists</li>
-              <li>User Researchers</li>
-              <li>Brand Strategists</li>
-            </ul>
-          </article>
-          <article class="team-member">
-            <h3>Design Crew</h3>
-            <p>Experience-, Interface- und Motion-Design mit System.</p>
-            <ul>
-              <li>UX & UI Designer</li>
-              <li>Design System Engineers</li>
-              <li>Motion Specialists</li>
-            </ul>
-          </article>
-          <article class="team-member">
-            <h3>Build Crew</h3>
-            <p>Frontend, Backend und QA arbeiten eng mit Growth zusammen.</p>
-            <ul>
-              <li>Fullstack Engineers</li>
-              <li>Platform Engineers</li>
-              <li>QA & Automation Experts</li>
-            </ul>
-          </article>
-        </div>
-      </section>
-      <section class="section culture">
-        <div class="section__header">
-          <span class="section__eyebrow">Culture</span>
-          <h2>Unsere Prinzipien</h2>
-        </div>
-        <ul class="culture__list">
-          <li>
-            <h3>Transparenz</h3>
-            <p>Wöchentliche Open Reviews mit Stakeholdern auf Kundenseite.</p>
-          </li>
-          <li>
-            <h3>Experimentieren</h3>
-            <p>Rapid Prototyping verbunden mit echten Nutzertests.</p>
-          </li>
-          <li>
-            <h3>Enablement</h3>
-            <p>Wir befähigen Teams, nach dem Projekt eigenständig weiterzuarbeiten.</p>
-          </li>
-        </ul>
-      </section>
-      <section class="section cta">
-        <div class="cta__card">
-          <div>
-            <h2>Werde Teil unserer Crew</h2>
-            <p>Wir wachsen kontinuierlich und freuen uns über neue Perspektiven.</p>
-          </div>
-          <a class="button button--primary" href="mailto:talent@brightside.studio">Initiativ bewerben</a>
-        </div>
-      </section>
-    </main>
-    <footer class="site-footer">
-      <p>&copy; <span data-year></span> Brightside Studio</p>
-    </footer>
-    <aside class="brief-panel" data-brief-panel aria-hidden="true">
-      <div class="brief-panel__card">
-        <button class="brief-panel__close" data-brief-close type="button" aria-label="Dialog schließen">×</button>
-        <h3>Projekt-Quickbrief</h3>
-        <form class="brief-form" data-brief-form>
-          <label>Projektname<input name="project" required /></label>
-          <label>Ziel<select name="goal" required><option value="">Bitte wählen</option><option>Produktidee validieren</option><option>Produkt skalieren</option><option>Brand erneuern</option><option>Team erweitern</option></select></label>
-          <div class="brief-form__choices">
-            <label><input type="radio" name="budget" value="25k" required /> 25.000 €</label>
-            <label><input type="radio" name="budget" value="50k" /> 50.000 €</label>
-            <label><input type="radio" name="budget" value="custom" /> individuelles Angebot</label>
-          </div>
-          <button class="button button--primary" type="submit">Briefing senden</button>
-        </form>
-      </div>
-    </aside>
-    <div class="brief-backdrop" data-brief-backdrop aria-hidden="true"></div>
-  </body>
-</html>
-`,
-  "styles.css": `:root {
-  color-scheme: dark;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --bg: #020617;
-  --surface: rgba(6, 14, 32, 0.78);
-  --surface-strong: rgba(10, 16, 32, 0.92);
-  --border: rgba(148, 163, 184, 0.16);
-  --primary: #60a5fa;
-  --primary-strong: #3b82f6;
-  --accent: #f9a8d4;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-}
-
-.page {
-  margin: 0;
-  min-height: 100vh;
-  background: radial-gradient(circle at 12% 16%, rgba(96, 165, 250, 0.35), transparent 55%),
-    radial-gradient(circle at 88% 8%, rgba(248, 113, 113, 0.28), transparent 55%),
-    linear-gradient(180deg, rgba(8, 11, 25, 0.95), #020617 70%);
-  color: var(--text);
-  display: flex;
-  flex-direction: column;
-  gap: 4rem;
-  padding-bottom: 5rem;
-}
-
-.page[data-theme="light"] {
-  --bg: #f8fafc;
-  --surface: rgba(255, 255, 255, 0.9);
-  --surface-strong: rgba(255, 255, 255, 0.96);
-  --border: rgba(15, 23, 42, 0.12);
-  --primary: #2563eb;
-  --primary-strong: #1d4ed8;
-  --accent: #ec4899;
-  --text: #0f172a;
-  --muted: #475569;
-  background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.18), transparent 55%),
-    radial-gradient(circle at 90% 15%, rgba(236, 72, 153, 0.22), transparent 60%),
-    linear-gradient(180deg, #f8fafc, #e2e8f0 70%);
-}
-
-body,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-ul,
-li,
-dl,
-dt,
-dd {
-  margin: 0;
-  padding: 0;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-ul {
-  list-style: none;
-}
-
-button,
-a.button {
-  font-family: inherit;
-}
-
-.button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  border-radius: 14px;
-  border: 1px solid transparent;
-  padding: 0.75rem 1.4rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.button--primary {
-  background: linear-gradient(135deg, var(--primary), var(--primary-strong));
-  color: #0b1120;
-  box-shadow: 0 18px 40px rgba(96, 165, 250, 0.3);
-}
-
-.button--ghost {
-  background: transparent;
-  border-color: var(--border);
-  color: var(--text);
-}
-
-.button:hover {
-  transform: translateY(-1px);
-}
-
-.hero {
-  padding: 3.5rem clamp(1.5rem, 5vw, 4rem) 2.5rem;
-  display: grid;
-  gap: 3rem;
-}
-
-.hero--subpage {
-  gap: 2.4rem;
-}
-
-.hero__nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: clamp(1rem, 3vw, 3rem);
-}
-
-.hero__logo {
-  font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.hero__links {
-  display: flex;
-  gap: 1.4rem;
-  font-weight: 500;
-}
-
-.hero__links a {
-  position: relative;
-  padding-bottom: 0.2rem;
-  color: var(--muted);
-}
-
-.hero__links a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.25s ease, background 0.25s ease;
-}
-
-.hero__links a:hover::after,
-.hero__links a.is-current::after {
-  transform: scaleX(1);
-}
-
-.hero__links a.is-current {
-  color: var(--text);
-}
-
-.hero__actions {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.hero__content {
-  display: grid;
-  gap: 2.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  align-items: center;
-}
-
-.subpage-intro {
-  grid-template-columns: minmax(260px, 520px);
-}
-
-.hero__eyebrow {
-  text-transform: uppercase;
-  font-size: 0.8rem;
-  letter-spacing: 0.14em;
-  color: var(--accent);
-}
-
-.hero__buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin: 1.4rem 0 0;
-}
-
-.hero__stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 1.2rem;
-  margin: 2.5rem 0 0;
-}
-
-.hero__stats dt {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-}
-
-.hero__stats dd {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0.35rem 0 0;
-}
-
-.hero__visual {
-  justify-self: center;
-}
-
-.orbit {
-  width: clamp(220px, 24vw, 320px);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 1px dashed rgba(148, 163, 184, 0.3);
-  display: grid;
-  place-items: center;
-  position: relative;
-  background: radial-gradient(circle, rgba(96, 165, 250, 0.18), transparent 60%);
-}
-
-.orbit span {
-  position: absolute;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  background: rgba(9, 16, 32, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.22);
-  box-shadow: 0 18px 45px rgba(2, 6, 23, 0.42);
-  font-size: 0.85rem;
-}
-
-.orbit span:nth-child(1) { top: 8%; left: 52%; transform: translate(-50%, 0); }
-.orbit span:nth-child(2) { bottom: 12%; left: 18%; }
-.orbit span:nth-child(3) { top: 46%; right: -4%; transform: translate(0, -50%); }
-.orbit span:nth-child(4) { bottom: 10%; right: 16%; }
-
-.section {
-  padding: 0 clamp(1.5rem, 5vw, 4rem);
-  display: grid;
-  gap: 2rem;
-}
-
-.section__header {
-  display: grid;
-  gap: 0.7rem;
-  max-width: 700px;
-}
-
-.section__eyebrow {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--muted);
-}
-
-.services__grid,
-.cases__grid,
-.testimonials__grid,
-.team-grid {
-  display: grid;
-  gap: 1.5rem;
-}
-
-.services__grid {
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-}
-
-.service-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1.8rem;
-  display: grid;
-  gap: 1rem;
-  box-shadow: 0 24px 50px rgba(2, 6, 23, 0.28);
-}
-
-.service-card footer {
-  margin-top: 0.6rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.service-card ul {
-  margin: 0;
-  padding-left: 1.15rem;
-  display: grid;
-  gap: 0.35rem;
-}
-
-.service-card--highlight {
-  background: var(--surface-strong);
-  border-color: rgba(96, 165, 250, 0.35);
-}
-
-.cases__filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.chip {
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: transparent;
-  padding: 0.35rem 0.9rem;
-  font-size: 0.85rem;
-  color: var(--muted);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.chip.is-active,
-.chip:hover {
-  color: var(--text);
-  border-color: rgba(96, 165, 250, 0.6);
-  background: rgba(96, 165, 250, 0.12);
-}
-
-.cases__grid {
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.work-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.6rem;
-  display: grid;
-  gap: 0.8rem;
-  min-height: 180px;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.work-card__tag {
-  font-size: 0.75rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.work-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 40px rgba(2, 6, 23, 0.25);
-}
-
-.highlight {
-  background: var(--surface-strong);
-  border-radius: 24px;
-  border: 1px solid var(--border);
-  padding: clamp(1.5rem, 4vw, 3rem);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2.5rem;
-  align-items: center;
-}
-
-.highlight__media {
-  min-height: 220px;
-  border-radius: 20px;
-  background: radial-gradient(circle at 30% 20%, rgba(96, 165, 250, 0.35), transparent 55%),
-    linear-gradient(135deg, rgba(37, 99, 235, 0.45), rgba(236, 72, 153, 0.45));
-}
-
-.highlight__list {
-  margin: 1.4rem 0 0;
-  padding-left: 1.2rem;
-  display: grid;
-  gap: 0.4rem;
-}
-
-.testimonials__grid {
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.testimonials blockquote {
-  margin: 0 0 1rem;
-  font-size: 1.05rem;
-  line-height: 1.7;
-}
-
-.newsletter__card {
-  background: var(--surface-strong);
-  border-radius: 22px;
-  border: 1px solid var(--border);
-  padding: clamp(1.8rem, 4vw, 2.6rem);
-  display: grid;
-  gap: 1.6rem;
-  align-items: center;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-}
-
-.newsletter__form {
-  display: flex;
-  gap: 0.8rem;
-  flex-wrap: wrap;
-}
-
-.newsletter__form input {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-  min-width: clamp(200px, 30vw, 260px);
-  color: inherit;
-}
-
-.team-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.team-member {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.8rem;
-  display: grid;
-  gap: 0.8rem;
-}
-
-.team-member ul {
-  padding-left: 1.1rem;
-  display: grid;
-  gap: 0.3rem;
-}
-
-.culture__list {
-  display: grid;
-  gap: 1rem;
-}
-
-.culture__list li {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.5rem;
-}
-
-.case-gallery {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-}
-
-.case-tile {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 1.8rem;
-  display: grid;
-  gap: 0.6rem;
-  min-height: 180px;
-  box-shadow: 0 22px 45px rgba(2, 6, 23, 0.28);
-}
-
-.case-tile header {
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-
-.case-tile--brand { border-color: rgba(249, 168, 212, 0.35); }
-.case-tile--product { border-color: rgba(96, 165, 250, 0.35); }
-.case-tile--growth { border-color: rgba(74, 222, 128, 0.35); }
-
-.metrics__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.2rem;
-}
-
-.metrics__grid dt {
-  font-size: 2.1rem;
-  font-weight: 700;
-  margin-bottom: 0.3rem;
-}
-
-.timeline__grid {
-  display: grid;
-  gap: 1.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.timeline__grid article {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.6rem;
-  min-height: 150px;
-  display: grid;
-  gap: 0.6rem;
-}
-
-.process__steps {
-  display: grid;
-  gap: 1.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  counter-reset: step;
-}
-
-.process__steps li {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 1.6rem;
-  display: grid;
-  gap: 0.6rem;
-}
-
-.cta__card {
-  background: var(--surface-strong);
-  border-radius: 22px;
-  border: 1px solid var(--border);
-  padding: clamp(1.6rem, 4vw, 2.4rem);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.2rem;
-}
-
-.site-footer {
-  padding: 0 clamp(1.5rem, 5vw, 4rem);
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.brief-panel,
-.brief-backdrop {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.brief-backdrop {
-  background: rgba(2, 6, 23, 0.6);
-  backdrop-filter: blur(14px);
-}
-
-.brief-panel__card {
-  position: absolute;
-  right: clamp(1rem, 6vw, 4rem);
-  bottom: clamp(1rem, 6vw, 4rem);
-  background: var(--surface-strong);
-  border-radius: 22px;
-  border: 1px solid var(--border);
-  padding: clamp(1.5rem, 4vw, 2.4rem);
-  width: min(420px, 92vw);
-  box-shadow: 0 28px 80px rgba(2, 6, 23, 0.45);
-  display: grid;
-  gap: 1.2rem;
-}
-
-.brief-panel.is-open,
-.brief-backdrop.is-open {
-  pointer-events: all;
-  opacity: 1;
-}
-
-.brief-panel__close {
-  position: absolute;
-  top: 0.8rem;
-  right: 0.9rem;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 1.8rem;
-  cursor: pointer;
-}
-
-.brief-form {
-  display: grid;
-  gap: 1rem;
-}
-
-.brief-form label {
-  display: grid;
-  gap: 0.45rem;
-  font-size: 0.9rem;
-}
-
-.brief-form input,
-.brief-form select {
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.7rem 0.9rem;
-  color: inherit;
-}
-
-.brief-form__choices {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-
-.subpage-main {
-  display: grid;
-  gap: 3rem;
-}
-
-@media (max-width: 900px) {
-  .hero__nav {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .hero__actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .hero__buttons {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .newsletter__form {
-    flex-direction: column;
-  }
-
-  .brief-panel__card {
-    right: 50%;
-    transform: translateX(50%);
-    bottom: clamp(1rem, 6vw, 2rem);
-  }
-}
-
-@media (max-width: 640px) {
-  .hero {
-    padding: 2.5rem 1.5rem 2rem;
-  }
-
-  .orbit span {
-    font-size: 0.75rem;
-  }
-}
-`,
-  "script.js": `document.addEventListener("DOMContentLoaded", () => {
-  const page = document.body;
-  const themeToggles = document.querySelectorAll('[data-theme-toggle]');
-  const navLinks = document.querySelectorAll('[data-nav]');
-  const filterButtons = document.querySelectorAll('[data-filter]');
-  const caseCards = document.querySelectorAll('[data-case]');
-  const counters = document.querySelectorAll('[data-count-to]');
-  const briefPanel = document.querySelector('[data-brief-panel]');
-  const briefBackdrop = document.querySelector('[data-brief-backdrop]');
-  const briefOpeners = document.querySelectorAll('[data-open-brief]');
-  const briefCloser = document.querySelector('[data-brief-close]');
-  const briefForm = document.querySelector('[data-brief-form]');
-  const newsletterForm = document.querySelector('.newsletter__form');
-  const currentPage = page?.dataset?.page || 'home';
-
-  const applyTheme = (mode) => {
-    page.dataset.theme = mode;
-  };
-
-  const toggleTheme = () => {
-    const next = page.dataset.theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-  };
-
-  themeToggles.forEach((btn) => btn.addEventListener('click', toggleTheme));
-
-  navLinks.forEach((link) => {
-    const isCurrent = link.dataset.nav === currentPage;
-    link.classList.toggle('is-current', isCurrent);
-    if (isCurrent) {
-      link.setAttribute('aria-current', 'page');
-    } else {
-      link.removeAttribute('aria-current');
-    }
+  </div>
+</body>
+</html>`,
+  "styles.css": `* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; transition: background 0.3s, color 0.3s; }
+body[data-theme="light"] { background: #f1f5f9; color: #1e293b; }
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+.sidenav { background: #1e293b; padding: 2rem 1.5rem; border-right: 1px solid rgba(148, 163, 184, 0.1); display: flex; flex-direction: column; gap: 0.5rem; }
+body[data-theme="light"] .sidenav { background: white; border-color: #e2e8f0; }
+.sidenav h1 { font-size: 1.5rem; margin-bottom: 1.5rem; }
+.nav-link { padding: 0.75rem 1rem; border-radius: 0.5rem; text-decoration: none; color: #94a3b8; transition: all 0.2s; }
+.nav-link:hover { background: rgba(99, 102, 241, 0.1); color: #6366f1; }
+.nav-link.active { background: #6366f1; color: white; }
+.theme-btn { margin-top: auto; padding: 0.75rem; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; background: transparent; color: inherit; cursor: pointer; transition: all 0.2s; }
+.theme-btn:hover { background: rgba(99, 102, 241, 0.1); border-color: #6366f1; }
+.content { padding: 2rem; max-width: 1400px; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+header h2 { font-size: 1.875rem; }
+select { padding: 0.5rem 1rem; border-radius: 0.5rem; border: 1px solid rgba(148, 163, 184, 0.2); background: #1e293b; color: inherit; }
+body[data-theme="light"] select { background: white; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 1.5rem; border-radius: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+body[data-theme="light"] .card { background: white; border-color: #e2e8f0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05); }
+.card .label { color: #94a3b8; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.card .value { font-size: 2rem; font-weight: 700; margin: 0.5rem 0; }
+.card .change { font-size: 0.875rem; font-weight: 600; }
+.positive { color: #10b981; }
+.negative { color: #ef4444; }
+.chart-card { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+body[data-theme="light"] .chart-card { background: white; border-color: #e2e8f0; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05); }
+.chart-card h3 { margin-bottom: 1rem; }
+#chart { width: 100%; height: auto; }
+.activity { background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 1.5rem; border-radius: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); }
+body[data-theme="light"] .activity { background: white; border-color: #e2e8f0; }
+.activity h3 { margin-bottom: 1rem; }
+.activity-item { display: flex; gap: 1rem; padding: 1rem; border-radius: 0.5rem; transition: background 0.2s; }
+.activity-item:hover { background: rgba(99, 102, 241, 0.05); }
+.activity-item span { font-size: 1.5rem; }
+.activity-item strong { display: block; margin-bottom: 0.25rem; }
+.activity-item small { color: #94a3b8; font-size: 0.75rem; }`,
+  "script.js": `document.addEventListener('DOMContentLoaded', () => {
+  const themeBtn = document.querySelector('[data-theme-toggle]');
+  themeBtn?.addEventListener('click', () => {
+    const current = document.body.dataset.theme;
+    document.body.dataset.theme = current === 'dark' ? 'light' : 'dark';
+    themeBtn.textContent = current === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
   });
 
-  document.addEventListener('click', (event) => {
-    if (event.defaultPrevented) return;
-    const anchor = event.target.closest('a');
-    if (!anchor) return;
-    const href = anchor.getAttribute('href');
-    if (!href) return;
-    if (/\\.html($|[?#])/i.test(href)) {
-      event.preventDefault();
-      const normalized = href.startsWith('./') ? href.slice(2) : href;
-      window.parent.postMessage(
-        { source: 'webeditor-preview', action: 'navigate', file: normalized },
-        '*'
-      );
-    }
-  });
-
-  if (currentPage === 'home') {
-    const animateCounters = () => {
-      counters.forEach((counter) => {
-        const target = Number(counter.dataset.countTo || 0);
-        let frame = 0;
-        const duration = 48;
-        const step = () => {
-          frame += 1;
-          const progress = Math.min(frame / duration, 1);
-          const eased = Math.pow(progress, 0.85);
-          counter.textContent = Math.round(target * eased);
-          if (progress < 1) {
-            requestAnimationFrame(step);
-          }
-        };
-        requestAnimationFrame(step);
-      });
+  const counters = document.querySelectorAll('[data-counter]');
+  counters.forEach(el => {
+    const target = parseInt(el.dataset.counter);
+    const prefix = el.dataset.prefix || '';
+    const suffix = el.dataset.suffix || '';
+    let current = 0;
+    const duration = 1200;
+    const increment = target / (duration / 16);
+    const animate = () => {
+      current += increment;
+      if (current < target) {
+        el.textContent = prefix + Math.floor(current).toLocaleString() + suffix;
+        requestAnimationFrame(animate);
+      } else {
+        el.textContent = prefix + target.toLocaleString() + suffix;
+      }
     };
-    animateCounters();
+    animate();
+  });
 
-    const applyFilter = (filter) => {
-      filterButtons.forEach((btn) => {
-        const isActive = btn.dataset.filter === filter;
-        btn.classList.toggle('is-active', isActive);
-        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
-      });
-      caseCards.forEach((card) => {
-        const matches = filter === 'all' || card.dataset.case === filter;
-        card.style.display = matches ? 'grid' : 'none';
-      });
-    };
-
-    filterButtons.forEach((btn) =>
-      btn.addEventListener('click', () => applyFilter(btn.dataset.filter))
-    );
-    applyFilter('all');
+  const canvas = document.getElementById('chart');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    const data = [65, 59, 80, 81, 76, 85, 90];
+    const max = Math.max(...data);
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = 20;
+    const barWidth = (width - padding * 2) / data.length;
+    ctx.clearRect(0, 0, width, height);
+    data.forEach((value, i) => {
+      const barHeight = (value / max) * (height - padding * 2);
+      const x = padding + i * barWidth;
+      const y = height - padding - barHeight;
+      const gradient = ctx.createLinearGradient(0, y, 0, height);
+      gradient.addColorStop(0, '#6366f1');
+      gradient.addColorStop(1, '#8b5cf6');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x + 5, y, barWidth - 10, barHeight);
+    });
   }
 
-  const toggleBrief = (open) => {
-    if (!briefPanel || !briefBackdrop) return;
-    briefPanel.classList.toggle('is-open', open);
-    briefBackdrop.classList.toggle('is-open', open);
-    briefPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
-    briefBackdrop.setAttribute('aria-hidden', open ? 'false' : 'true');
-  };
-
-  briefOpeners.forEach((btn) => btn.addEventListener('click', () => toggleBrief(true)));
-  briefCloser?.addEventListener('click', () => toggleBrief(false));
-  briefBackdrop?.addEventListener('click', () => toggleBrief(false));
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      toggleBrief(false);
-    }
-  });
-
-  briefForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(event.currentTarget));
-    console.table(data);
-    toggleBrief(false);
-    event.currentTarget.reset();
-  });
-
-  newsletterForm?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const email = formData.get('email');
-    console.log('Newsletter-Abo für ' + email);
-    event.currentTarget.reset();
-  });
-
-  const yearEl = document.querySelector('[data-year]');
-  if (yearEl) {
-    yearEl.textContent = String(new Date().getFullYear());
-  }
-});
-`,
+  console.log('Dashboard initialisiert ✨');
+  console.table({ Benutzer: 4250, Umsatz: 28400, Konversionen: 847 });
+});`
 };
+
+
 
 const EMPTY_PROJECT = {};
 
@@ -1629,48 +410,10 @@ function populateGeminiModelSelect(models = cachedGeminiModels, preferredModel =
   }
 }
 
-function getChatIntroText() {
-  return hasGeminiApiKey()
-    ? "Gemini ist bereit. Stelle Fragen zu deinem Projekt oder bitte um Code-Vorschläge."
-    : "Hinterlege zuerst deinen Gemini API-Schlüssel in den Einstellungen, um den Chat zu nutzen.";
-}
-
-function renderChatMessages() {
-  if (!chatMessagesContainer) {
-    return;
-  }
-  chatMessagesContainer.innerHTML = "";
-  chatMessagesState.forEach((message) => {
-    const item = document.createElement("div");
-    item.classList.add("chat-message", `chat-message--${message.role}`);
-    if (message.state === "pending") {
-      item.classList.add("chat-message--pending");
-    }
-    if (message.state === "error") {
-      item.classList.add("chat-message--error");
-    }
-
-    const title = document.createElement("span");
-    title.className = "chat-message__title";
-    title.textContent = message.role === "assistant"
-      ? "Gemini"
-      : message.role === "user"
-        ? "Du"
-        : "Hinweis";
-    item.appendChild(title);
-
-    const paragraph = document.createElement("p");
-    paragraph.textContent = message.content;
-    item.appendChild(paragraph);
-
-    chatMessagesContainer.appendChild(item);
-  });
-  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
-}
-
 function appendChatMessage(role, content, state = "complete") {
+  const id = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
   const message = {
-    id: `msg-${nextChatMessageId++}`,
+    id,
     role,
     content,
     state,
@@ -1774,6 +517,16 @@ function getConversationContents() {
     }));
 }
 
+function getConsoleHistorySummary(limit = 12) {
+  if (!consoleHistory.length) {
+    return "Keine aktuellen Konsolenausgaben.";
+  }
+  const recent = consoleHistory.slice(-limit);
+  return recent
+    .map((entry) => `[${entry.level}] ${entry.lines.join("\n")}`)
+    .join("\n\n");
+}
+
 function stopChatRequest() {
   if (chatAbortController) {
     chatAbortController.abort();
@@ -1791,6 +544,158 @@ function clearChatConversation() {
   updateChatAvailability();
   showToast("Chat-Verlauf geleert");
   setStatus("Chat-Verlauf zurückgesetzt", "info");
+}
+
+const GEMINI_TOOLS = [
+  {
+    functionDeclarations: [
+      {
+        name: "createFile",
+        description: "Erstellt eine neue Datei im Projekt. Nutze dies wenn der Benutzer eine neue Datei erstellen möchte.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: {
+              type: "string",
+              description: "Name der zu erstellenden Datei (z.B. 'utils.js', 'style.css', 'index.html')"
+            },
+            content: {
+              type: "string",
+              description: "Vollständiger Inhalt der neuen Datei"
+            }
+          },
+          required: ["filename", "content"]
+        }
+      },
+      {
+        name: "updateFile",
+        description: "Aktualisiert den kompletten Inhalt einer bestehenden Datei. Nutze dies wenn der Benutzer eine Datei ändern oder erweitern möchte.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: {
+              type: "string",
+              description: "Name der zu aktualisierenden Datei"
+            },
+            content: {
+              type: "string",
+              description: "Neuer vollständiger Inhalt der Datei (nicht nur Änderungen, sondern die komplette Datei)"
+            }
+          },
+          required: ["filename", "content"]
+        }
+      },
+      {
+        name: "deleteFile",
+        description: "Löscht eine Datei aus dem Projekt. Nutze dies nur wenn der Benutzer explizit eine Datei löschen möchte.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: {
+              type: "string",
+              description: "Name der zu löschenden Datei"
+            }
+          },
+          required: ["filename"]
+        }
+      }
+    ]
+  }
+];
+
+
+function handleToolCreateFile(filename, content) {
+  if (projectFiles[filename]) {
+    return { success: false, message: `Datei "${filename}" existiert bereits` };
+  }
+  projectFiles[filename] = content;
+  activeFile = filename;
+  saveProjectFiles();
+  saveActiveFileName(activeFile);
+  renderFileList();
+  syncEditorWithActiveFile({ focus: true });
+  if (isHTMLFile(filename)) {
+    currentPreviewFile = filename;
+    updatePreview({ resetLogs: true, silent: true });
+  } else {
+    schedulePreviewUpdate();
+  }
+  return { success: true, message: `Datei "${filename}" wurde erstellt` };
+}
+
+function handleToolUpdateFile(filename, content) {
+  if (!projectFiles[filename]) {
+    const result = handleToolCreateFile(filename, content);
+    if (result.success) {
+      result.message = `Datei "${filename}" wurde neu angelegt (fehlte zuvor).`;
+    }
+    return result;
+  }
+  projectFiles[filename] = content;
+  saveProjectFiles();
+  if (activeFile === filename) {
+    syncEditorWithActiveFile({ focus: false });
+  }
+  if (isHTMLFile(filename) && currentPreviewFile === filename) {
+    updatePreview({ resetLogs: false, silent: true });
+  } else {
+    schedulePreviewUpdate();
+  }
+  return { success: true, message: `Datei "${filename}" wurde aktualisiert` };
+}
+
+function handleToolDeleteFile(filename) {
+  if (!projectFiles[filename]) {
+    return { success: false, message: `Datei "${filename}" nicht gefunden` };
+  }
+  const fileCount = Object.keys(projectFiles).length;
+  if (fileCount <= 1) {
+    return { success: false, message: "Die letzte Datei kann nicht gelöscht werden" };
+  }
+  delete projectFiles[filename];
+  fileHandles.delete(filename);
+
+  if (activeFile === filename) {
+    const remainingFiles = Object.keys(projectFiles);
+    activeFile = remainingFiles[0] || null;
+    syncEditorWithActiveFile({ focus: true });
+  }
+
+  if (currentPreviewFile === filename) {
+    currentPreviewFile = determinePreviewFileForProject(projectFiles, activeFile);
+  }
+
+  saveProjectFiles();
+  saveActiveFileName(activeFile);
+  renderFileList();
+
+  if (activeFile && isHTMLFile(activeFile)) {
+    updatePreview({ resetLogs: true, silent: true });
+  } else {
+    schedulePreviewUpdate();
+  }
+
+  return { success: true, message: `Datei "${filename}" wurde gelöscht` };
+}
+
+async function executeToolCall(toolCall) {
+  const name = toolCall.name;
+  const args = toolCall.args;
+
+  try {
+    switch (name) {
+      case 'createFile':
+        return handleToolCreateFile(args.filename, args.content);
+      case 'updateFile':
+        return handleToolUpdateFile(args.filename, args.content);
+      case 'deleteFile':
+        return handleToolDeleteFile(args.filename);
+      default:
+        return { success: false, message: `Unbekanntes Tool: ${name}` };
+    }
+  } catch (error) {
+    return { success: false, message: `Fehler bei Tool-Ausführung: ${error.message}` };
+  }
 }
 
 async function sendChatPrompt(prompt, { reuseLastUser = false } = {}) {
@@ -1826,51 +731,179 @@ async function sendChatPrompt(prompt, { reuseLastUser = false } = {}) {
   const model = getSelectedGeminiModel();
   const modelPath = model.startsWith("models/") ? model : `models/${model}`;
   const url = `https://generativelanguage.googleapis.com/v1beta/${modelPath}:generateContent?key=${encodeURIComponent(apiKey)}`;
-  const body = {
-    contents: trimmedContents,
+
+  const hasFiles = Object.keys(projectFiles || {}).length > 0;
+
+  const fileContext = hasFiles
+    ? Object.entries(projectFiles)
+        .map(([name, content]) => {
+          const preview = content.length > 500 ? content.slice(0, 500) + '...' : content;
+          return `Datei: ${name}\n\`\`\`\n${preview}\n\`\`\``;
+        })
+        .join('\n\n')
+    : "Noch keine Dateien vorhanden. Lege bei Bedarf eine 'index.html' plus optional 'styles.css' und 'script.js' an.";
+  const consoleContext = getConsoleHistorySummary(12);
+
+  const systemInstruction = [
+    "Du bist ein hilfreicher Code-Assistent, der Änderungen direkt im Projekt vornimmt.",
+    "Nutze die bereitgestellten Tools 'createFile', 'updateFile' und 'deleteFile' konsequent, um Dateien anzulegen oder zu ändern. Es sind mehrere Tool-Aufrufe pro Antwort erlaubt.",
+    "Wenn der Nutzer nur ein Ziel oder eine Idee nennt, entscheide selbst welche Dateien nötig sind (z.B. 'index.html', 'styles.css', 'script.js') und lege sie an bzw. aktualisiere sie mit vollständigem Inhalt.",
+    "Lege fehlende HTML-Dateien an und verbinde sie mit CSS/JS; passe bestehende Dateien an, wenn das besser passt.",
+    "Fasse dich in deiner Antwort kurz (1-2 Sätze) und erwähne, welche Dateien geändert oder erstellt wurden.",
+    "Projektübersicht:",
+    fileContext,
+    "Neueste Konsolenausgaben aus der Vorschau:",
+    consoleContext,
+    `Aktive Datei: ${activeFile || "Keine"}`,
+  ].join("\n\n");
+
+  const baseBody = {
+    systemInstruction: {
+      parts: [{ text: systemInstruction }]
+    },
+    tools: GEMINI_TOOLS,
     generationConfig: {
       temperature: 0.35,
       topP: 0.95,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 2048,
+    },
+    toolConfig: {
+      functionCallingConfig: {
+        mode: "AUTO",
+      },
     },
   };
 
   chatAbortController = new AbortController();
 
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-      signal: chatAbortController.signal,
-    });
+    let conversation = [...trimmedContents];
+    let finalText = "";
+    let safetyCounter = 0;
+    let toolExecutionCount = 0;
+    const MAX_TOOL_ROUNDS = 6;
 
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const message = payload?.error?.message || `Gemini API Fehler (${response.status})`;
-      throw new Error(message);
+    async function callGemini(contentsPayload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...baseBody,
+          contents: contentsPayload,
+        }),
+        signal: chatAbortController.signal,
+      });
+
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const message = payload?.error?.message || `Gemini API Fehler (${response.status})`;
+        throw new Error(message);
+      }
+
+      const candidate = payload?.candidates?.[0];
+      const parts = candidate?.content?.parts || candidate?.parts || [];
+      return parts;
     }
 
-    const candidate = payload?.candidates?.[0];
-    const parts = candidate?.content?.parts || candidate?.parts || [];
-    const text = parts
-      .map((part) => part?.text)
-      .filter(Boolean)
-      .join("\n")
-      .trim();
+    while (safetyCounter < MAX_TOOL_ROUNDS && !finalText) {
+      const parts = await callGemini(conversation);
+      const functionCalls = parts.filter((part) => part.functionCall);
+      const textParts = parts
+        .map((part) => part?.text)
+        .filter(Boolean)
+        .join("\n")
+        .trim();
 
-    if (!text) {
-      throw new Error("Gemini lieferte keine Antwort");
+      if (!functionCalls.length) {
+        // Wenn keine Tools genutzt werden, fordere erneut explizit zur Tool-Nutzung auf.
+        if (safetyCounter < MAX_TOOL_ROUNDS - 1) {
+          conversation = [
+            ...conversation,
+            ...(textParts
+              ? [
+                  {
+                    role: "model",
+                    parts: [{ text: textParts }],
+                  },
+                ]
+              : []),
+            {
+              role: "user",
+              parts: [
+                {
+                  text:
+                    "Nutze zwingend die vorhandenen Tools createFile/updateFile/deleteFile, um die gewünschten Änderungen vorzunehmen. Kein reiner Text, bitte rufe die Funktionen mit den Dateiinhalten auf.",
+                },
+              ],
+            },
+          ];
+          safetyCounter += 1;
+          continue;
+        }
+
+        finalText = textParts || "Keine Tool-Ausführung erhalten.";
+        break;
+      }
+
+      const toolResults = [];
+      for (const part of functionCalls) {
+        const toolCall = {
+          name: part.functionCall.name,
+          args: part.functionCall.args || {},
+        };
+        const result = await executeToolCall(toolCall);
+        if (result?.success) {
+          toolExecutionCount += 1;
+        }
+        toolResults.push({
+          name: toolCall.name,
+          args: toolCall.args,
+          result: result,
+        });
+        const toolMessage = `🔧 Tool: ${toolCall.name}(${JSON.stringify(toolCall.args).slice(0, 100)}...)\n${result.success ? "✅" : "❌"} ${result.message}`;
+        appendChatMessage("system", toolMessage);
+      }
+
+      conversation = [
+        ...conversation,
+        {
+          role: "model",
+          parts: functionCalls.map((fc) => ({ functionCall: fc.functionCall })),
+        },
+        {
+          role: "function",
+          parts: toolResults.map((tr) => ({
+            functionResponse: {
+              name: tr.name,
+              response: tr.result,
+            },
+          })),
+        },
+      ];
+
+      if (textParts) {
+        conversation.push({
+          role: "model",
+          parts: [{ text: textParts }],
+        });
+      }
+
+      safetyCounter += 1;
+    }
+
+    if (!finalText) {
+      finalText = "Keine finale Antwort nach mehreren Werkzeug-Schritten.";
     }
 
     updateChatMessage(pendingMessage.id, {
-      content: text,
+      content: finalText,
       state: "complete",
     });
-    setStatus("Gemini-Antwort erhalten", "success");
-    showToast("Gemini-Antwort bereit");
+    const statusType = toolExecutionCount > 0 ? "success" : "warning";
+    setStatus(toolExecutionCount > 0 ? "Gemini-Antwort erhalten" : "Keine Tool-Ausführung erkannt", statusType);
+    showToast(toolExecutionCount > 0 ? "Gemini-Antwort bereit" : "Gemini antwortete ohne Änderungen");
   } catch (error) {
     if (error.name === "AbortError") {
       updateChatMessage(pendingMessage.id, {
@@ -1953,6 +986,21 @@ function initializeChatInterface() {
 
   chatTextarea.addEventListener("input", () => {
     updateChatAvailability();
+  });
+
+  chatTextarea.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      const text = (chatTextarea.value || "").trim();
+      const canSend = !chatIsBusy && hasGeminiApiKey() && Boolean(text);
+      if (canSend) {
+        event.preventDefault();
+        if (typeof chatInputForm.requestSubmit === "function") {
+          chatInputForm.requestSubmit();
+        } else {
+          chatInputForm.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+        }
+      }
+    }
   });
 
   updateChatAvailability();
@@ -2602,6 +1650,7 @@ const fileHandles = new Map();
 const canOpenWithFileSystemAccess = typeof window.showOpenFilePicker === "function";
 const canSaveWithFileSystemAccess = typeof window.showSaveFilePicker === "function";
 const canOpenDirectory = typeof window.showDirectoryPicker === "function";
+let consoleHistory = [];
 
 const PANEL_SELECTOR_MAP = {
   "file-sidebar": ".file-sidebar",
@@ -2625,6 +1674,7 @@ const panelVisibilityConfig = {
 const TEXT_FILE_EXTENSIONS = /\.(html?|css|jsx?|tsx?|ts|json|ya?ml|md|txt|svg|xml|cjs|mjs)$/i;
 
 const PREVIEW_UPDATE_DELAY = 350;
+const CONSOLE_HISTORY_LIMIT = 120;
 
 if (!canOpenDirectory) {
   openFolderButton?.setAttribute("disabled", "true");
@@ -3012,6 +2062,56 @@ function handleRenameFile() {
   setStatus(`Datei umbenannt in ${trimmed}`, "success");
   showToast("Datei umbenannt");
 }
+
+function handleDeleteFile() {
+  if (!activeFile) {
+    showToast("Keine Datei ausgewählt");
+    return;
+  }
+
+  const fileCount = Object.keys(projectFiles).length;
+  if (fileCount <= 1) {
+    showToast("Die letzte Datei kann nicht gelöscht werden");
+    setStatus("Mindestens eine Datei muss im Projekt bleiben", "warning");
+    return;
+  }
+
+  const confirmed = window.confirm(`Datei "${activeFile}" wirklich löschen?\n\nDieser Vorgang kann nicht rückgängig gemacht werden.`);
+  if (!confirmed) {
+    return;
+  }
+
+  const deletedFile = activeFile;
+  delete projectFiles[deletedFile];
+  fileHandles.delete(deletedFile);
+
+  const remainingFiles = Object.keys(projectFiles);
+  activeFile = remainingFiles[0] || null;
+
+  if (currentPreviewFile === deletedFile) {
+    currentPreviewFile = determinePreviewFileForProject(projectFiles, activeFile);
+  }
+
+  saveProjectFiles();
+  saveActiveFileName(activeFile);
+  renderFileList();
+  syncEditorWithActiveFile({ focus: true });
+
+  if (activeFile && isHTMLFile(activeFile)) {
+    updatePreview({ resetLogs: true, silent: true });
+  } else if (activeFile) {
+    schedulePreviewUpdate();
+  } else {
+    resetConsole();
+    if (previewFrame) {
+      previewFrame.srcdoc = "";
+    }
+  }
+
+  setStatus(`Datei gelöscht: ${deletedFile}`, "success");
+  showToast("Datei gelöscht");
+}
+
 
 function handleResetProject() {
   const confirmed = window.confirm(
@@ -3486,6 +2586,7 @@ if (currentPreviewFile) {
 }
 
 function resetConsole() {
+  consoleHistory = [];
   if (consoleLogEl) {
     consoleLogEl.textContent = "";
     consoleLogEl.scrollTop = 0;
@@ -3508,8 +2609,8 @@ function formatConsoleLines(level, message, details) {
     typeof message === "string" && message.length
       ? message
       : Array.isArray(details?.args)
-      ? details.args.join(" ")
-      : "";
+        ? details.args.join(" ")
+        : "";
 
   lines.push(primary ? `${icon} ${primary}` : icon);
 
@@ -3569,10 +2670,16 @@ function formatConsoleLines(level, message, details) {
 }
 
 function appendConsoleMessage(level, message, details = {}) {
-  if (!consoleLogEl) return;
   const lines = formatConsoleLines(level, message, details);
-  consoleLogEl.textContent += `${lines.join("\n")}\n`;
-  consoleLogEl.scrollTop = consoleLogEl.scrollHeight;
+  consoleHistory.push({ level, lines, timestamp: Date.now() });
+  if (consoleHistory.length > CONSOLE_HISTORY_LIMIT) {
+    consoleHistory = consoleHistory.slice(-CONSOLE_HISTORY_LIMIT);
+  }
+
+  if (consoleLogEl) {
+    consoleLogEl.textContent += `${lines.join("\n")}\n`;
+    consoleLogEl.scrollTop = consoleLogEl.scrollHeight;
+  }
 }
 
 function buildPreviewDocument(entryFile) {
@@ -3590,13 +2697,13 @@ function buildPreviewDocument(entryFile) {
     .map(([, content]) => (content || "").trim())
     .filter(Boolean);
 
-const stylesMarkup = cssBlocks.length
+  const stylesMarkup = cssBlocks.length
     ? `<style data-origin="webeditor-styles">
 ${cssBlocks.join("\n\n")}
 </style>`
     : "";
 
-const scriptsMarkup = jsBlocks.length
+  const scriptsMarkup = jsBlocks.length
     ? `<script data-origin="webeditor-scripts">
 ${jsBlocks.join("\n\n")}
 </scr` + `ipt>`
@@ -4116,6 +3223,8 @@ formatButton?.addEventListener("click", formatCode);
 newFileButton?.addEventListener("click", handleCreateFile);
 resetFilesButton?.addEventListener("click", handleResetProject);
 renameFileButton?.addEventListener("click", handleRenameFile);
+const deleteFileButton = document.getElementById("delete-file-button");
+deleteFileButton?.addEventListener("click", handleDeleteFile);
 openLocalButton?.addEventListener("click", handleOpenLocalFile);
 saveLocalButton?.addEventListener("click", handleSaveLocalFile);
 localFileInput?.addEventListener("change", handleLocalFileInputChange);
@@ -4141,4 +3250,61 @@ if (!projectInitializedFromStorage) {
   setStatus("Projekt auswählen", "info");
 } else {
   setStatus("Gespeichertes Projekt verfügbar", "info");
+}
+
+function getChatIntroText() {
+  return "Verbinde Google Gemini in den Einstellungen, um hier Fragen zu deinem Projekt zu stellen und Code-Vorschläge zu erhalten.";
+}
+
+function renderChatMessages() {
+  if (!chatMessagesContainer) {
+    return;
+  }
+  chatMessagesContainer.innerHTML = "";
+  chatMessagesState.forEach((msg) => {
+    const div = document.createElement("div");
+    div.className = `chat-message chat-message--${msg.role}`;
+    if (msg.state === "pending") {
+      div.classList.add("chat-message--pending");
+    }
+    if (msg.state === "error") {
+      div.classList.add("chat-message--error");
+    }
+
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "chat-message__title";
+
+    let icon = "";
+    let label = "";
+
+    switch (msg.role) {
+      case "user":
+        icon = "👤";
+        label = "Du";
+        break;
+      case "assistant":
+      case "model":
+        icon = "✨";
+        label = "Gemini";
+        break;
+      case "system":
+        icon = "⚙️";
+        label = "Hinweis";
+        break;
+      default:
+        icon = "💬";
+        label = "Nachricht";
+    }
+
+    titleSpan.textContent = `${icon} ${label}`;
+    div.appendChild(titleSpan);
+
+    const contentP = document.createElement("p");
+    contentP.textContent = msg.content;
+    div.appendChild(contentP);
+
+    chatMessagesContainer.appendChild(div);
+  });
+
+  chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
 }
