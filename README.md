@@ -1,33 +1,47 @@
 # Code WebEditor
 
-A complete in-browser code editor with a live preview.
+Browserbasierter Code-Editor mit Live-Vorschau, Dateiverwaltung und optionalem KI-Chat (Google Gemini).
 
-## Features
+Der Editor laeuft komplett im Browser, laedt oder speichert lokale Dateien, aktualisiert die Vorschau automatisch und kann per Gemini-Chat Code fuer dich schreiben oder anpassen.
 
-- **Live Preview:** See your changes in real-time as you code.
-- **File Management:** Create, rename, and manage your project files.
-- **Syntax Highlighting:** Code editor with syntax highlighting for HTML, CSS, and JavaScript.
-- **Console Output:** View console logs and errors directly in the editor.
-- **Project Templates:** Start with a blank project or use the example project to get started quickly.
-- **Local Storage:** Your project is automatically saved to your browser's local storage.
+Er ist gedacht fuer schnelle HTML/CSS/JS-Prototypen ohne lokale IDE oder Build-Setup: Datei(en) importieren, Code anpassen, Vorschau beobachten, fertig. Das macht ihn praktisch fuer Workshops, Demos, Unterricht oder kurze Spikes, bei denen du keinen Dev-Server oder Node-Stack starten willst.
 
-## How to Use
+Ein Start-Screen fuehrt dich wahlweise in ein Beispiel-Layout (mehrere Seiten mit Navigation, Theme-Toggle und Interaktionen) oder in ein leeres Projekt. Das Projekt bleibt im Local Storage erhalten, laesst sich aber auch per File System Access API direkt vom Geraet laden und speichern. Console-Logs und Fehler der Vorschau landen in einem eigenen Panel, damit du Feedback ohne DevTools bekommst.
 
-1.  Open `index.html` in your web browser.
-2.  You will be greeted with a start screen. Choose to start with a blank project or the example project.
-3.  The editor is divided into three main sections:
-    *   **File Sidebar:** On the left, you can manage your project files.
-    *   **Code Editor:** In the middle, you can write your HTML, CSS, and JavaScript code.
-    *   **Live Preview & Console:** On the right, you can see the live preview of your code and any console output.
-4.  Click the "Run Code" button to execute your code and update the live preview.
-5.  Use the "Format" button to format your code.
-6.  Use the "Reset" button to reset the current file to its default content.
-7.  Use the "Project Reset" button in the file sidebar to reset the entire project to the initial template.
+Der eingebaute Gemini-Chat kann Dateien anlegen, ersetzen oder loeschen, sobald du einen API-Key hinterlegt hast. Du bekommst damit einen KI-Co-Piloten, der das aktuelle Projekt kennt, Tool-Aufrufe ausfuehrt und dir kurze Antworten liefert, waehrend du weiter im Editor arbeitest.
 
-## Technologies Used
+## Highlights
+- Live Preview: Autoupdate nach jeder Aenderung oder manuell per `Code ausfuehren`.
+- Editor: Syntax-Highlighting (HTML/CSS/JS), Formatieren-Button, Konsole fuer Logs und Fehler.
+- Dateien: Erstellen, umbenennen, loeschen, resetten; Projekte bleiben im Local Storage erhalten; Start-Screen mit leerem oder Beispiel-Projekt.
+- Import/Export: Einzelne Dateien oder ganze Ordner via File System Access API (Chromium/localhost/https). Speichere geoeffnete Dateien zurueck auf das Geraet.
+- KI-Assistent: Chat auf Basis von Google Gemini, der Dateien im Projekt per Tools anlegt oder aendert. Schnellaktionen (Stop/Neu generieren/Verlauf loeschen), Modellwahl, API-Key bleibt lokal.
+- Layout: Panels (Dateien, Editor, Vorschau, Konsole, Chat) ein- und ausblendbar.
 
--   HTML
--   CSS
--   JavaScript
--   [Ace Editor](https://ace.c9.io/) for the code editor.
--   [JS Beautify](https://beautifier.io/) for code formatting.
+## Schnellstart
+1. Repo clonen oder herunterladen.
+2. `index.html` in einem modernen Chromium-Browser oeffnen. Fuer Ordner-Import und Speicherdialoge am besten ueber `http://localhost` oder HTTPS laufen lassen, z. B.:
+   ```sh
+   python -m http.server 8000
+   # oder
+   npx serve
+   ```
+3. Im Start-Screen ein Beispielprojekt, ein leeres Projekt oder einen lokalen Ordner waehlen. Bereits gespeicherte Projekte lassen sich fortsetzen.
+4. Dateien links auswaehlen, im Editor anpassen und die Vorschau beobachten. Bei Bedarf `Code ausfuehren` klicken; die Autopreview laeuft sonst automatisch.
+5. Fehler und Logs erscheinen in der Konsole unter der Vorschau.
+
+## KI einrichten (Google Gemini)
+- API-Key in der [Google AI Studio Console](https://makersuite.google.com/app/apikey) erzeugen.
+- Einstellungen > Assistenten oeffnen, Key eintragen und speichern. Der Key wird nur lokal im Browser-Storage gehalten.
+- Verbindung testen und optional ein Modell auswaehlen.
+- Im Chat (rechtes Panel) Prompts formulieren; der Assistent kann Dateien anlegen, anpassen oder loeschen. Aktionen wie Stop/Neu generieren stehen unter dem Eingabefeld bereit.
+
+## Arbeiten mit lokalen Dateien
+- `Ordner importieren` liest ein ganzes Projekt (Chromium + File System Access API + Secure Context erforderlich).
+- `Lokale Datei oeffnen` laedt einzelne Dateien; `Datei speichern` schreibt sie zurueck.
+- Fallback: Der Editor speichert alle Dateien automatisch in `localStorage`, sodass du spaeter fortsetzen kannst.
+
+## Technologien
+- HTML, CSS, JavaScript
+- [Ace Editor](https://ace.c9.io/) fuer Syntax-Highlighting
+- [JS Beautify](https://beautifier.io/) fuer Formatieren
